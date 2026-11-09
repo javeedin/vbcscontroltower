@@ -2,7 +2,7 @@
 
 **A VBCS application that manages the complete software development lifecycle — from the first idea to shipped releases — across every product you build, with per‑customer deployment tracking, feature governance, and an AI FDD‑to‑app builder.**
 
-> Status: **Phase 1.3 — AI FDD Interpreter** on real Oracle JET + DuckDB (full CRUD + document‑to‑spec, persisted locally). VBCS realization next. See [`ROADMAP.md`](ROADMAP.md).
+> Status: **Phase 1.4 — EquipRite "Redwood" shell** (multi‑tab + banner header) on real Oracle JET + DuckDB, with the AI FDD Interpreter. VBCS realization next. See [`ROADMAP.md`](ROADMAP.md).
 
 ## AI setup (Design & Spec)
 

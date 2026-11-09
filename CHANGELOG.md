@@ -18,6 +18,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning foll
 
 - **Phase 1.3 — AI FDD Interpreter (Design & Spec):** a toolbar **AI setup** (Claude / OpenAI / Gemini / OpenAI‑compatible / OCI; API key stored server‑side in a gitignored file, LLM called from the server — never in the browser or git). On **Design & Spec**, upload or paste a requirements / FDD document and the AI extracts **features, pages, flows, validations, conditions, entities** into a **versioned spec saved in DuckDB** (`blueprints` table). Falls back to a heuristic extractor when no key is set. Verified end‑to‑end with Playwright (0 console errors).
 
+- **Phase 1.4 — EquipRite Next "Redwood" shell:** matched EquipRite's Redwood look — top **multi‑tab** navigation with an active‑tab underline, the **teal page‑header banner** (`rgb(44,82,102)`) with Oracle's colour strip, **Oracle Sans**, and EquipRite's exact Redwood tokens (page `rgb(245,244,242)`, ink `rgb(22,21,19)`, accent `rgb(0,104,140)`, 6px radii). Replaces the left‑sidebar shell; oj‑table / oj‑dialog still render via the JET Redwood theme. Verified with Playwright (tabs navigate, banner updates per screen, data from DuckDB, 0 console errors).
+
 ### Next
 - Convert the remaining card/diagram screens (Product 360, Lifecycle Board, Calendar, Release Readiness, Compare releases) to native JET views; generate VBCS artifacts from a saved spec; add live GitHub / Jira / VB Studio sync; then realize the app in VBCS. See `ROADMAP.md`.
 

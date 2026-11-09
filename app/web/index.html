@@ -7,101 +7,94 @@
 <link rel="stylesheet" href="https://static.oracle.com/cdn/jet/16.1.0/default/css/redwood/oj-redwood-min.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
-<body class="oj-web-applayout-body">
-<div id="globalBody" class="app-root" style="visibility:hidden">
+<body>
+<div id="globalBody" style="visibility:hidden">
 
-  <header class="app-header">
-    <div class="brand"><div class="brand-logo">CT</div><div><b>Control&nbsp;Tower</b><span>Lifecycle cockpit · DuckDB</span></div></div>
-    <div class="header-spacer"></div>
-    <div class="sync"><span class="d"></span>Local DuckDB</div>
-    <oj-button chroming="borderless" on-oj-action="[[openAiSettings]]" title="AI setup"><span data-bind="text: aiBtnText"></span></oj-button>
-    <div class="avatar" title="You">KN</div>
+  <header class="ct-top">
+    <div class="ct-brand"><div class="ct-logo">CT</div><div><b>Control&nbsp;Tower</b><span>Lifecycle cockpit · DuckDB</span></div></div>
+    <div class="ct-spacer"></div>
+    <button class="ct-aibtn" data-bind="css:{on: aiConfigured}, click: openAiSettings, text: aiBtnText"></button>
+    <div class="ct-avatar" title="You">KN</div>
   </header>
 
-  <div class="app-main">
-    <aside class="app-nav">
-      <oj-navigation-list id="nav" data="[[navDP]]" selection="{{selectedView}}" drill-mode="none" aria-label="Main navigation">
-        <template slot="itemTemplate" data-oj-as="item">
-          <li :id="[[item.data.id]]">
-            <a href="#"><span class="nav-emo" :title="[[item.data.label]]"><oj-bind-text value="[[item.data.icon]]"></oj-bind-text></span><oj-bind-text value="[[item.data.label]]"></oj-bind-text></a>
-          </li>
-        </template>
-      </oj-navigation-list>
-    </aside>
+  <nav class="ct-tabs">
+    <div class="ct-tabs-in" data-bind="foreach: screens">
+      <button class="ct-tab" data-bind="css:{'ct-tab--on': $root.selectedView()===id}, click: function(){ $root.go(id); }">
+        <span class="ct-tab-ic" data-bind="text: icon"></span><span data-bind="text: label"></span>
+      </button>
+    </div>
+  </nav>
 
-    <main class="app-content">
-
-      <!-- PORTFOLIO (cards) -->
-      <div data-bind="visible: currentType()==='cards'">
-        <div class="screen-head"><div><h1 class="oj-typography-heading-lg">Portfolio</h1><div class="screen-sub">Every product, every phase — at a glance</div></div></div>
-        <div class="kpis" data-bind="foreach: kpis">
-          <div class="kpi"><div class="n" data-bind="text: n"></div><div class="l" data-bind="text: l"></div></div>
-        </div>
-        <div class="cards" data-bind="foreach: products">
-          <div class="pcard">
-            <div class="pcard-top"><div><h3 data-bind="text: name"></h3><div class="tag" data-bind="text: tag"></div></div><div class="ring" data-bind="text: ringText"></div></div>
-            <div class="bar"><i data-bind="style:{width: barW, background: barC}"></i></div>
-            <div class="meta"><span class="chip" data-bind="text: phase"></span><span data-bind="text: rel"></span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TABLE (generic, reused for every list screen) -->
-      <div data-bind="visible: currentType()==='table'">
-        <div class="screen-head">
-          <div><h1 class="oj-typography-heading-lg" data-bind="text: title"></h1><div class="screen-sub" data-bind="text: sub"></div></div>
-          <oj-button chroming="callToAction" on-oj-action="[[openAdd]]" data-bind="visible: canAdd"><span data-bind="text: addLabel"></span></oj-button>
-        </div>
-        <oj-table id="grid" aria-label="Records" data="[[tableDP]]" columns="[[tableColumns]]"></oj-table>
-      </div>
-
-      <!-- DESIGN & SPEC — AI interpreter -->
-      <div data-bind="visible: currentType()==='builder'">
-        <div class="screen-head"><div><h1 class="oj-typography-heading-lg">Design &amp; Spec — AI Interpreter</h1><div class="screen-sub">Upload or paste a requirements / FDD document. AI reads it and extracts features, pages, flows, validations &amp; conditions into a versioned spec, stored in DuckDB.</div></div></div>
-        <div class="panel">
-          <div class="dlg-field"><label>Product / idea</label><input data-bind="value: biTarget" placeholder="e.g. FleetTrack"></div>
-          <div class="dlg-field"><label>Document (.txt / .md) — or paste below</label><input type="file" id="biFile" accept=".txt,.md,.markdown,text/plain"></div>
-          <div class="dlg-field"><label>Document text</label><textarea id="biText" rows="9" data-bind="value: biText" placeholder="Paste the requirements / FDD text here…"></textarea></div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <oj-button chroming="callToAction" on-oj-action="[[analyzeDoc]]">Analyze with AI</oj-button>
-            <span class="screen-sub" data-bind="text: biStatus"></span>
-          </div>
-        </div>
-
-        <div data-bind="visible: biResult">
-          <div class="panel">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-              <h2 style="margin:0" data-bind="text: biResultTitle"></h2>
-              <oj-button on-oj-action="[[saveSpec]]">Save as spec version</oj-button>
-            </div>
-            <div class="bi-grid">
-              <div class="bi-col"><h4>Features</h4><ul data-bind="foreach: biFeatures"><li data-bind="text: $data"></li></ul></div>
-              <div class="bi-col"><h4>Pages</h4><ul data-bind="foreach: biPages"><li data-bind="text: $data"></li></ul></div>
-              <div class="bi-col"><h4>Flows</h4><ul data-bind="foreach: biFlows"><li data-bind="text: $data"></li></ul></div>
-              <div class="bi-col"><h4>Validations</h4><ul data-bind="foreach: biValidations"><li data-bind="text: $data"></li></ul></div>
-              <div class="bi-col"><h4>Conditions</h4><ul data-bind="foreach: biConditions"><li data-bind="text: $data"></li></ul></div>
-              <div class="bi-col"><h4>Entities</h4><ul data-bind="foreach: biEntities"><li data-bind="text: $data"></li></ul></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <h2 style="margin:0 0 10px">Saved spec versions</h2>
-          <div data-bind="foreach: biVersions" class="speclist2">
-            <div class="specitem2"><b data-bind="text: label"></b><span class="screen-sub" data-bind="text: meta"></span></div>
-          </div>
-          <div class="screen-sub" data-bind="visible: biVersions().length===0">No spec versions yet — analyze a document and save it.</div>
-        </div>
-      </div>
-
-      <!-- SOON -->
-      <div data-bind="visible: currentType()==='soon'">
-        <div class="screen-head"><div><h1 class="oj-typography-heading-lg" data-bind="text: title"></h1></div></div>
-        <div class="soon-panel">This screen is being built as a native Oracle JET view next. Its data already lives in DuckDB — the Redwood screen is on the way.</div>
-      </div>
-
-    </main>
+  <div class="ct-pagehead">
+    <div class="ct-pagehead-in">
+      <div><h1 data-bind="text: bannerTitle"></h1><div class="ct-kicker" data-bind="text: bannerSub"></div></div>
+      <button class="ct-hbtn" data-bind="visible: canAdd, click: openAdd, text: addLabel"></button>
+    </div>
   </div>
+
+  <main class="ct-content">
+
+    <!-- PORTFOLIO -->
+    <div class="view" data-bind="visible: currentType()==='cards'">
+      <div class="kpis" data-bind="foreach: kpis">
+        <div class="kpi"><div class="n" data-bind="text: n"></div><div class="l" data-bind="text: l"></div></div>
+      </div>
+      <div class="cards" data-bind="foreach: products">
+        <div class="pcard">
+          <div class="pcard-top"><div><h3 data-bind="text: name"></h3><div class="tag" data-bind="text: tag"></div></div><div class="ring" data-bind="text: ringText"></div></div>
+          <div class="bar"><i data-bind="style:{width: barW, background: barC}"></i></div>
+          <div class="meta"><span class="chip" data-bind="text: phase"></span><span data-bind="text: rel"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE (reused for every list screen) -->
+    <div class="view" data-bind="visible: currentType()==='table'">
+      <oj-table id="grid" aria-label="Records" data="[[tableDP]]" columns="[[tableColumns]]"></oj-table>
+    </div>
+
+    <!-- DESIGN & SPEC — AI interpreter -->
+    <div class="view" data-bind="visible: currentType()==='builder'">
+      <div class="panel">
+        <div class="dlg-field"><label>Product / idea</label><input data-bind="value: biTarget" placeholder="e.g. FleetTrack"></div>
+        <div class="dlg-field"><label>Document (.txt / .md) — or paste below</label><input type="file" id="biFile" accept=".txt,.md,.markdown,text/plain"></div>
+        <div class="dlg-field"><label>Document text</label><textarea id="biText" rows="9" data-bind="value: biText" placeholder="Paste the requirements / FDD text here…"></textarea></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <oj-button chroming="callToAction" on-oj-action="[[analyzeDoc]]">Analyze with AI</oj-button>
+          <span class="screen-sub" data-bind="text: biStatus"></span>
+        </div>
+      </div>
+      <div data-bind="visible: biResult">
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <h2 style="margin:0" data-bind="text: biResultTitle"></h2>
+            <oj-button on-oj-action="[[saveSpec]]">Save as spec version</oj-button>
+          </div>
+          <div class="bi-grid">
+            <div class="bi-col"><h4>Features</h4><ul data-bind="foreach: biFeatures"><li data-bind="text: $data"></li></ul></div>
+            <div class="bi-col"><h4>Pages</h4><ul data-bind="foreach: biPages"><li data-bind="text: $data"></li></ul></div>
+            <div class="bi-col"><h4>Flows</h4><ul data-bind="foreach: biFlows"><li data-bind="text: $data"></li></ul></div>
+            <div class="bi-col"><h4>Validations</h4><ul data-bind="foreach: biValidations"><li data-bind="text: $data"></li></ul></div>
+            <div class="bi-col"><h4>Conditions</h4><ul data-bind="foreach: biConditions"><li data-bind="text: $data"></li></ul></div>
+            <div class="bi-col"><h4>Entities</h4><ul data-bind="foreach: biEntities"><li data-bind="text: $data"></li></ul></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2 style="margin:0 0 10px">Saved spec versions</h2>
+        <div data-bind="foreach: biVersions" class="speclist2">
+          <div class="specitem2"><b data-bind="text: label"></b><span class="screen-sub" data-bind="text: meta"></span></div>
+        </div>
+        <div class="screen-sub" data-bind="visible: biVersions().length===0">No spec versions yet — analyze a document and save it.</div>
+      </div>
+    </div>
+
+    <!-- SOON -->
+    <div class="view" data-bind="visible: currentType()==='soon'">
+      <div class="soon-panel">This screen is being built as a native Oracle JET view next. Its data already lives in DuckDB — the Redwood screen is on the way.</div>
+    </div>
+
+  </main>
 </div>
 
 <!-- Add record dialog -->

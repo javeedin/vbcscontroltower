@@ -1,7 +1,7 @@
 require([
   'ojs/ojbootstrap', 'knockout', 'ojs/ojarraydataprovider',
-  'ojs/ojknockout', 'ojs/ojnavigationlist', 'ojs/ojtable', 'ojs/ojbutton',
-  'ojs/ojtoolbar', 'ojs/ojdialog', 'ojs/ojinputtext'
+  'ojs/ojknockout', 'ojs/ojtable', 'ojs/ojbutton',
+  'ojs/ojdialog', 'ojs/ojinputtext'
 ], function (Bootstrap, ko, ArrayDataProvider) {
   'use strict';
 
@@ -56,8 +56,11 @@ require([
 
   function VM() {
     const self = this;
-    self.navDP = new ArrayDataProvider(SCREENS.map(s => ({ id: s.id, label: s.label, icon: s.icon })), { keyAttributes: 'id' });
+    self.screens = SCREENS;
     self.selectedView = ko.observable('portfolio');
+    self.bannerTitle = ko.observable('Portfolio');
+    self.bannerSub = ko.observable('');
+    self.go = function (id) { self.selectedView(id); self.loadScreen(id); };
 
     self.currentType = ko.observable('cards');
     self.title = ko.observable(''); self.sub = ko.observable('');
@@ -192,6 +195,10 @@ require([
       currentScreen = s; currentColl = s.coll;
       self.currentType(s.type);
       self.title(s.label); self.sub('');
+      self.bannerTitle(s.label);
+      self.bannerSub(s.id === 'portfolio' ? 'Every product, every phase — at a glance'
+        : s.id === 'specs' ? 'Upload or paste a document; AI extracts the design spec into DuckDB'
+        : (s.coll ? 'Stored in DuckDB · live records' : ''));
       if (s.type === 'builder') { self.loadVersions(); return; }
       if (s.type === 'cards') { self.loadPortfolio(); return; }
       if (s.type === 'table') {
@@ -220,7 +227,7 @@ require([
       api.del(currentColl, id).then(function () { self.reloadTable(); });
     };
 
-    self.selectedView.subscribe(function (id) { if (id) self.loadScreen(id); });
+    // navigation is driven by self.go(id) from the tab bar
   }
 
   Bootstrap.whenDocumentReady().then(function () {
