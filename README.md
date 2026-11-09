@@ -2,7 +2,7 @@
 
 **A VBCS application that manages the complete software development lifecycle — from the first idea to shipped releases — across every product you build, with per‑customer deployment tracking, feature governance, and an AI FDD‑to‑app builder.**
 
-> Status: **Phase 1 — runnable dev build** (full UI + sample data). VBCS realization next. See [`ROADMAP.md`](ROADMAP.md).
+> Status: **Phase 1.2 — real Oracle JET UI + DuckDB backend** (full CRUD, persisted locally). VBCS realization next. See [`ROADMAP.md`](ROADMAP.md).
 
 ---
 
@@ -58,7 +58,7 @@ npm install
 npm run serve        # → http://localhost:3000
 ```
 
-This is the **local dev harness** — the full Control Tower UI with embedded sample data, so you can click through every screen. It's the development emulation; the production app is realized and deployed in **VBCS** (Business Objects + Service Connections + JET pages). Wiring the UI to a mock Business‑Object REST layer is the next increment (see `ROADMAP.md`).
+This is the **local dev harness**: the UI is built with **real Oracle JET / Redwood components** (oj‑navigation‑list, oj‑table, oj‑button, oj‑dialog, loaded from the Oracle JET CDN — so it needs internet), and **every object type is stored in a local DuckDB database** (`app/data/controltower.duckdb`, seeded from `app/data/seed.json` on first run, served via `/rest/:collection`). You can add, edit and delete records and they persist. It's the development emulation; the production app is realized/deployed in **VBCS** (Business Objects + Service Connections + JET pages) — swapping this harness for VBCS is a base‑URL change.
 
 **Desktop app (Electron):**
 

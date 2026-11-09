@@ -7,9 +7,12 @@
     "serve": "node server.js",
     "start": "node server.js",
     "desktop": "cd desktop && npm start",
-    "desktop:fresh": "cd desktop && npm install && npm start"
+    "desktop:fresh": "npm install && cd desktop && npm install && npm start"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@duckdb/node-api": "^2.0.0-r.1"
   }
 }

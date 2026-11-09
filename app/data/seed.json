@@ -1,0 +1,78 @@
+{
+  "products": [
+    {"id":"ct","name":"Control Tower","tag":"Internal tool","phase":"Build","readiness":72,"rel":"v0.1 · train 26D","reltxt":"Planned · 3 gates open","risks":1,"repo":"javeedin/vbcscontroltower","sprint":"Sprint 1 · Portfolio + Product 360","stack":"VBCS"},
+    {"id":"eqp","name":"EquipRite","tag":"Equipment rental mgmt","phase":"Release","readiness":88,"rel":"2026.1 · train 26C","reltxt":"In progress · 5/6 gates","risks":0,"repo":"javeedin/equiprite-rebuild","sprint":"Sprint 2026-07 · Picking & trace","stack":"VBCS"},
+    {"id":"ft","name":"FleetTrack","tag":"Telematics","phase":"Idea","readiness":null,"rel":"—","reltxt":"Not scoped yet","risks":2,"repo":"—","sprint":"—","stack":"React"},
+    {"id":"inv","name":"InvoicePro","tag":"Billing","phase":"Test","readiness":54,"rel":"v2.0 · train 26D","reltxt":"In progress · 3 blockers","risks":3,"repo":"javeedin/invoicepro","sprint":"Sprint 14 · UAT fixes","stack":"VBCS"}
+  ],
+  "customers": [
+    {"id":"acme","name":"Acme Rentals","type":"External","ver":"1.2.4","rel":"2025.4","env":"Prod","since":"Jun 2025","base":18,"custom":1,"reqs":3},
+    {"id":"globex","name":"Globex Plant Hire","type":"External","ver":"1.3.0","rel":"2026.1","env":"Prod","since":"Aug 2026","base":22,"custom":2,"reqs":5},
+    {"id":"initech","name":"Initech (Internal)","type":"Internal","ver":"1.3.0","rel":"2026.1","env":"Prod","since":"Aug 2026","base":22,"custom":1,"reqs":1},
+    {"id":"umbrella","name":"Umbrella Equip","type":"External","ver":"1.2.4","rel":"2025.4","env":"Test","since":"Oct 2026","base":18,"custom":1,"reqs":2}
+  ],
+  "releases": [
+    {"id":"rel1","product":"EquipRite","version":"2026.1 (web 1.3.0)","target":"Aug 2026","train":"26C","state":"In progress","readiness":88},
+    {"id":"rel2","product":"InvoicePro","version":"v2.0.0","target":"Nov 2026","train":"26D","state":"In progress","readiness":54},
+    {"id":"rel3","product":"Control Tower","version":"v0.1.0","target":"Dec 2026","train":"26D","state":"Planned","readiness":72},
+    {"id":"rel4","product":"EquipRite","version":"2025.4 (web 1.2.4)","target":"Nov 2025","train":"25D","state":"Released","readiness":100}
+  ],
+  "features": [
+    {"id":"f1","name":"My requests","module":"Requests","type":"core","intro":"2024.1","customers":["acme","globex","initech","umbrella"]},
+    {"id":"f2","name":"Approve & allocate","module":"Approvals","type":"core","intro":"2024.1","customers":["acme","globex","initech","umbrella"]},
+    {"id":"f3","name":"Pick & ship","module":"Fulfilment","type":"core","intro":"2024.2","customers":["acme","globex","initech","umbrella"]},
+    {"id":"f4","name":"Rates & compare","module":"Billing","type":"core","intro":"2025.1","customers":["acme","globex","initech","umbrella"]},
+    {"id":"f5","name":"Availability yard grid","module":"Equipment","type":"core","intro":"2025.4","customers":["globex","initech"]},
+    {"id":"f6","name":"Multi-currency billing","module":"Billing","type":"candidate","intro":"2026.2 (planned)","customers":["globex","umbrella"]},
+    {"id":"f7","name":"SSO with Azure AD","module":"Security","type":"candidate","intro":"backlog","customers":["initech"]},
+    {"id":"f8","name":"Custom BI dashboard","module":"Reporting","type":"customer","intro":"custom","customers":["acme"]},
+    {"id":"f9","name":"SMS delivery alerts","module":"Notifications","type":"customer","intro":"custom","customers":["globex"]}
+  ],
+  "requests": [
+    {"id":"q1","customer":"Globex Plant Hire","title":"SMS alerts on delivery","kind":"New feature","status":"Delivered","disposition":"Customer-specific","target":"custom patch"},
+    {"id":"q2","customer":"Acme Rentals","title":"Custom BI dashboard","kind":"Enhancement","status":"In build","disposition":"Customer-specific","target":"—"},
+    {"id":"q3","customer":"Globex Plant Hire","title":"Multi-currency billing","kind":"New feature","status":"Approved","disposition":"Promote to core","target":"2026.2"},
+    {"id":"q4","customer":"Umbrella Equip","title":"Multi-currency billing","kind":"New feature","status":"Requested","disposition":"Under decision","target":"—"},
+    {"id":"q5","customer":"Acme Rentals","title":"Bulk return scan","kind":"Modification","status":"Under review","disposition":"Under decision","target":"—"},
+    {"id":"q6","customer":"Initech (Internal)","title":"SSO with Azure AD","kind":"Enhancement","status":"Requested","disposition":"Promote to core","target":"—"}
+  ],
+  "pipelines": [
+    {"id":"p1","product":"EquipRite","name":"web-ci (Next)","engine":"GitHub Actions","last":"passed","duration":"4m 12s","when":"2h ago","trigger":"push"},
+    {"id":"p2","product":"EquipRite","name":"deploy-test","engine":"VB Studio","last":"passed","duration":"6m 02s","when":"1d ago","trigger":"manual"},
+    {"id":"p3","product":"InvoicePro","name":"web-ci","engine":"GitHub Actions","last":"failed","duration":"3m 48s","when":"5h ago","trigger":"PR #212"},
+    {"id":"p4","product":"Control Tower","name":"lint + validate","engine":"GitHub Actions","last":"passed","duration":"1m 30s","when":"today","trigger":"push"},
+    {"id":"p5","product":"InvoicePro","name":"deploy-test","engine":"VB Studio","last":"running","duration":"—","when":"now","trigger":"manual"}
+  ],
+  "ideas": [
+    {"id":"i1","title":"Customer self-service portal","value":"High","effort":"M","score":8,"status":"Evaluating"},
+    {"id":"i2","title":"AI rate suggestions","value":"High","effort":"M","score":7,"status":"New"},
+    {"id":"i3","title":"Offline-first mobile sync","value":"Med","effort":"L","score":6,"status":"Accepted"},
+    {"id":"i4","title":"Legacy report retirement","value":"Low","effort":"S","score":2,"status":"Rejected"}
+  ],
+  "versions": [
+    {"id":"v_ct","product":"Control Tower","web":"0.1.0","mobile":"—","desktop":"—","integration":"—","suite":"—"},
+    {"id":"v_eqp","product":"EquipRite","web":"1.3.0 (prod 1.2.4)","mobile":"1.1","desktop":"0.4.0 (prod 0.3.1)","integration":"OIC 3.2","suite":"2026.1"},
+    {"id":"v_ft","product":"FleetTrack","web":"—","mobile":"—","desktop":"—","integration":"—","suite":"—"},
+    {"id":"v_inv","product":"InvoicePro","web":"2.0.0-rc1 (prod 1.4.2)","mobile":"—","desktop":"—","integration":"2.0.0 (prod 1.4.0)","suite":"v2.0"}
+  ],
+  "integrations": [
+    {"id":"github","name":"GitHub","status":"Connected","detail":"4 repos · PRs, Actions, tags, releases","lastSync":"5m ago"},
+    {"id":"jira","name":"Jira","status":"Connected","detail":"Projects EQP, INV · stories, sprints, fixVersions","lastSync":"12m ago"},
+    {"id":"vbstudio","name":"VB Studio","status":"Not connected","detail":"Builds & deployments to VBCS instances","lastSync":"—"},
+    {"id":"oic","name":"OIC","status":"Not connected","detail":"Integration run status (optional)","lastSync":"—"}
+  ],
+  "gates": [
+    {"id":"g1","name":"Tests green","detail":"CI run #482 · 0 failures","source":"GitHub Actions","status":"pass"},
+    {"id":"g2","name":"Acceptance criteria present","detail":"3 of 41 stories missing criteria","source":"Jira","status":"warn"},
+    {"id":"g3","name":"CHANGELOG updated","detail":"Entry for 2026.1 added","source":"Repo","status":"pass"},
+    {"id":"g4","name":"Version bumped","detail":"web 1.2.4 → 1.3.0","source":"Manifest","status":"pass"},
+    {"id":"g5","name":"Deployed to Test","detail":"1.3.0 on Test pod · 1d ago","source":"VB Studio","status":"pass"},
+    {"id":"g6","name":"No open blockers","detail":"0 blocker bugs","source":"Jira","status":"pass"}
+  ],
+  "spec": [
+    {"id":"ct","docs":[{"k":"RD","n":"Requirements Document","m":"v0.1 · updated today"},{"k":"FDD","n":"Functional Design","m":"16 screens · today"},{"k":"TDD","n":"Technical Design","m":"data model + AI builder · today"},{"k":"ADR","n":"ADR-001 · VBCS + external LLM","m":"accepted"}],"features":["Portfolio dashboard","Product 360","Release Readiness score","Version matrix","AI FDD Interpreter","DORA metrics","Activity log"],"entities":[{"n":"Product","f":9},{"n":"Release","f":7},{"n":"Gate","f":5},{"n":"Environment","f":6},{"n":"Blueprint","f":6},{"n":"ProductDoc","f":6}],"pages":[{"n":"Portfolio","t":"dashboard"},{"n":"Product 360","t":"detail"},{"n":"Release Readiness","t":"detail"},{"n":"Blueprint Studio","t":"wizard"}],"apis":[{"n":"GitHub","e":"repos, actions, tags","s":"Connected","c":"ok"},{"n":"Jira","e":"issues, sprints","s":"Connected","c":"ok"},{"n":"VB Studio","e":"builds, deploys","s":"Not set","c":"na"},{"n":"LLM","e":"extract + generate","s":"Connected","c":"ok"}]},
+    {"id":"eqp","docs":[{"k":"FDD","n":"EquipRite FDD v2.0","m":"multi-company · 2w ago"},{"k":"RD","n":"Redesign brief","m":"Redwood IA · 1mo ago"},{"k":"TDD","n":"Architecture notes","m":"VBCS + Electron + Android"}],"features":["My requests","Approve & allocate","Pick & ship","Rates & compare","Availability yard","Jira stories + Record","SQL worksheet + Ask AI"],"entities":[{"n":"Request","f":12},{"n":"Equipment","f":14},{"n":"Customer","f":10},{"n":"RateSchedule","f":9}],"pages":[{"n":"My work","t":"dashboard"},{"n":"Requests","t":"list"},{"n":"Equipment 360","t":"detail"},{"n":"Rates","t":"detail"}],"apis":[{"n":"Fusion REST","e":"projects, customers","s":"Connected","c":"ok"},{"n":"OIC","e":"transfer orders","s":"Connected","c":"ok"},{"n":"Fusion PPM","e":"post costs","s":"Connected","c":"ok"}]},
+    {"id":"ft","docs":[{"k":"RD","n":"Idea one-pager","m":"draft"}],"features":["(to be scoped)"],"entities":[],"pages":[],"apis":[]},
+    {"id":"inv","docs":[{"k":"FDD","n":"InvoicePro FDD","m":"v2.0 · 3w ago"},{"k":"TDD","n":"Billing engine design","m":"2w ago"}],"features":["Invoice generation","Approval workflow","Dunning reminders","OIC billing sync"],"entities":[{"n":"Invoice","f":11},{"n":"Customer","f":9}],"pages":[{"n":"Invoices","t":"list"},{"n":"Run billing","t":"form"}],"apis":[{"n":"OIC","e":"billing sync","s":"Warning","c":"warn"},{"n":"Fusion AR","e":"post invoices","s":"Connected","c":"ok"}]}
+  ]
+}

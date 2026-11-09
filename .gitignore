@@ -13,6 +13,11 @@ out/
 .vb/
 *.vbcs-tmp
 
+# Local DuckDB database (seeded from app/data/seed.json on first run)
+*.duckdb
+*.duckdb.wal
+app/data/*.duckdb
+
 # Logs
 *.log
 npm-debug.log*
