@@ -1,0 +1,370 @@
+{
+  "_comment": "Control Tower data model (BLUEPRINT, not a VBCS import file). Each entry becomes a VBCS Business Object. Derived from docs/02-technical-TDD.md and docs/03-addendum-customers-and-governance.md. Types: string|text|number|boolean|date|timestamp|enum|ref.",
+  "version": "0.1.0",
+  "businessObjects": [
+    {
+      "name": "Product",
+      "group": "monitor",
+      "fields": [
+        {"name": "name", "type": "string", "required": true},
+        {"name": "description", "type": "text"},
+        {"name": "owner", "type": "string"},
+        {"name": "stack", "type": "enum", "values": ["VBCS", "React", "Angular", "Node", "APEX", "Other"]},
+        {"name": "phase", "type": "enum", "values": ["Idea", "Requirements", "Design", "Build", "Test", "Release"]},
+        {"name": "status", "type": "enum", "values": ["Active", "Paused", "Sunset"]},
+        {"name": "repoUrl", "type": "string"},
+        {"name": "jiraProject", "type": "string"},
+        {"name": "vbStudioUrl", "type": "string"}
+      ],
+      "relationships": ["has many Component, Release, Environment, Risk, Dependency, ProductDoc, Feature, Customer"]
+    },
+    {
+      "name": "Component",
+      "group": "monitor",
+      "fields": [
+        {"name": "name", "type": "string", "required": true},
+        {"name": "type", "type": "enum", "values": ["web", "mobile", "desktop", "api", "integration"]},
+        {"name": "versionScheme", "type": "enum", "values": ["semver", "calver"]},
+        {"name": "currentVersion", "type": "string"},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ]
+    },
+    {
+      "name": "Release",
+      "group": "monitor",
+      "fields": [
+        {"name": "version", "type": "string", "required": true},
+        {"name": "suiteVersion", "type": "string"},
+        {"name": "targetDate", "type": "date"},
+        {"name": "train", "type": "string"},
+        {"name": "state", "type": "enum", "values": ["Planned", "In progress", "Ready", "Released", "Rolled back"]},
+        {"name": "readinessPct", "type": "number"},
+        {"name": "notes", "type": "text"},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ],
+      "relationships": ["has many GateResult, DeployRecord, ReleaseFeature"]
+    },
+    {
+      "name": "Gate",
+      "group": "monitor",
+      "fields": [
+        {"name": "name", "type": "string", "required": true},
+        {"name": "type", "type": "enum", "values": ["auto", "manual"]},
+        {"name": "rule", "type": "string"},
+        {"name": "weight", "type": "number"},
+        {"name": "blocking", "type": "boolean"}
+      ]
+    },
+    {
+      "name": "GateResult",
+      "group": "monitor",
+      "fields": [
+        {"name": "status", "type": "enum", "values": ["pass", "warn", "fail", "na"]},
+        {"name": "source", "type": "string"},
+        {"name": "detail", "type": "string"},
+        {"name": "checkedAt", "type": "timestamp"},
+        {"name": "release", "type": "ref", "to": "Release"},
+        {"name": "gate", "type": "ref", "to": "Gate"}
+      ]
+    },
+    {
+      "name": "Environment",
+      "group": "monitor",
+      "fields": [
+        {"name": "name", "type": "enum", "values": ["Dev", "Test", "Prod"]},
+        {"name": "url", "type": "string"},
+        {"name": "deployedVersion", "type": "string"},
+        {"name": "deployedAt", "type": "timestamp"},
+        {"name": "health", "type": "enum", "values": ["Healthy", "Warning", "Down", "Unknown"]},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ]
+    },
+    {
+      "name": "DeployRecord",
+      "group": "monitor",
+      "fields": [
+        {"name": "version", "type": "string"},
+        {"name": "env", "type": "string"},
+        {"name": "deployedAt", "type": "timestamp"},
+        {"name": "result", "type": "enum", "values": ["success", "failed", "rolledback"]},
+        {"name": "durationSec", "type": "number"},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ]
+    },
+    {
+      "name": "Idea",
+      "group": "discovery",
+      "fields": [
+        {"name": "title", "type": "string", "required": true},
+        {"name": "problem", "type": "text"},
+        {"name": "value", "type": "enum", "values": ["Low", "Med", "High"]},
+        {"name": "effort", "type": "enum", "values": ["S", "M", "L"]},
+        {"name": "score", "type": "number"},
+        {"name": "status", "type": "enum", "values": ["New", "Evaluating", "Accepted", "Rejected", "Promoted"]}
+      ]
+    },
+    {
+      "name": "ProductDoc",
+      "group": "design",
+      "fields": [
+        {"name": "type", "type": "enum", "values": ["RD", "FDD", "TDD", "spec", "runbook", "other"]},
+        {"name": "name", "type": "string", "required": true},
+        {"name": "url", "type": "string"},
+        {"name": "body", "type": "text"},
+        {"name": "version", "type": "string"},
+        {"name": "updatedAt", "type": "timestamp"},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ]
+    },
+    {
+      "name": "ADR",
+      "group": "design",
+      "fields": [
+        {"name": "title", "type": "string", "required": true},
+        {"name": "context", "type": "text"},
+        {"name": "decision", "type": "text"},
+        {"name": "consequences", "type": "text"},
+        {"name": "date", "type": "date"},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ]
+    },
+    {
+      "name": "Risk",
+      "group": "operate",
+      "fields": [
+        {"name": "title", "type": "string", "required": true},
+        {"name": "severity", "type": "enum", "values": ["Low", "Medium", "High", "Critical"]},
+        {"name": "status", "type": "enum", "values": ["Open", "Mitigating", "Closed"]},
+        {"name": "owner", "type": "string"},
+        {"name": "description", "type": "text"},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ]
+    },
+    {
+      "name": "Incident",
+      "group": "operate",
+      "fields": [
+        {"name": "title", "type": "string", "required": true},
+        {"name": "severity", "type": "enum", "values": ["Low", "Medium", "High", "Critical"]},
+        {"name": "status", "type": "enum", "values": ["Investigating", "Identified", "Resolved", "PostmortemDone"]},
+        {"name": "timeline", "type": "text"},
+        {"name": "postmortem", "type": "text"},
+        {"name": "startedAt", "type": "timestamp"},
+        {"name": "resolvedAt", "type": "timestamp"},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ]
+    },
+    {
+      "name": "Dependency",
+      "group": "monitor",
+      "fields": [
+        {"name": "fromId", "type": "ref", "to": "Product"},
+        {"name": "toId", "type": "ref", "to": "Product"},
+        {"name": "kind", "type": "enum", "values": ["depends", "calls", "shares"]}
+      ]
+    },
+    {
+      "name": "Integration",
+      "group": "platform",
+      "fields": [
+        {"name": "type", "type": "enum", "values": ["GitHub", "Jira", "VBStudio", "OCIDevOps", "OIC", "LLM"]},
+        {"name": "status", "type": "enum", "values": ["Connected", "Error", "NotSet"]},
+        {"name": "lastSync", "type": "timestamp"},
+        {"name": "scope", "type": "string"}
+      ]
+    },
+    {
+      "name": "ActivityLog",
+      "group": "platform",
+      "fields": [
+        {"name": "ts", "type": "timestamp"},
+        {"name": "actor", "type": "string"},
+        {"name": "entityType", "type": "string"},
+        {"name": "entityId", "type": "string"},
+        {"name": "action", "type": "string"},
+        {"name": "before", "type": "text"},
+        {"name": "after", "type": "text"}
+      ],
+      "notes": "append-only"
+    },
+    {
+      "name": "MetricSnapshot",
+      "group": "insight",
+      "fields": [
+        {"name": "product", "type": "ref", "to": "Product"},
+        {"name": "metric", "type": "enum", "values": ["deployFreq", "leadTime", "cfr", "mttr", "velocity", "cycleTime", "readiness"]},
+        {"name": "value", "type": "number"},
+        {"name": "window", "type": "string"},
+        {"name": "computedAt", "type": "timestamp"}
+      ]
+    },
+
+    {
+      "name": "Feature",
+      "group": "governance",
+      "fields": [
+        {"name": "name", "type": "string", "required": true},
+        {"name": "module", "type": "string"},
+        {"name": "type", "type": "enum", "values": ["core", "customer", "candidate"]},
+        {"name": "status", "type": "string"},
+        {"name": "introducedInRelease", "type": "ref", "to": "Release"},
+        {"name": "originCustomer", "type": "ref", "to": "Customer"},
+        {"name": "demandCount", "type": "number"},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ]
+    },
+    {
+      "name": "ReleaseFeature",
+      "group": "governance",
+      "fields": [
+        {"name": "release", "type": "ref", "to": "Release"},
+        {"name": "feature", "type": "ref", "to": "Feature"},
+        {"name": "changeType", "type": "enum", "values": ["added", "changed", "removed"]}
+      ],
+      "notes": "enables release comparison (diff)"
+    },
+    {
+      "name": "Customer",
+      "group": "governance",
+      "fields": [
+        {"name": "name", "type": "string", "required": true},
+        {"name": "type", "type": "enum", "values": ["Internal", "External"]},
+        {"name": "industry", "type": "string"},
+        {"name": "status", "type": "enum", "values": ["Prospect", "Onboarding", "Live", "Churned"]},
+        {"name": "primaryContact", "type": "string"},
+        {"name": "since", "type": "date"},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ],
+      "relationships": ["has many Deployment, CustomerFeature, FeatureRequest"]
+    },
+    {
+      "name": "Deployment",
+      "group": "governance",
+      "fields": [
+        {"name": "customer", "type": "ref", "to": "Customer"},
+        {"name": "product", "type": "ref", "to": "Product"},
+        {"name": "version", "type": "string"},
+        {"name": "release", "type": "ref", "to": "Release"},
+        {"name": "environment", "type": "enum", "values": ["Dev", "Test", "Prod"]},
+        {"name": "deployedAt", "type": "timestamp"},
+        {"name": "status", "type": "enum", "values": ["Scheduled", "Upgrading", "Live", "RolledBack"]}
+      ],
+      "notes": "which version/release is live for which customer"
+    },
+    {
+      "name": "CustomerFeature",
+      "group": "governance",
+      "fields": [
+        {"name": "customer", "type": "ref", "to": "Customer"},
+        {"name": "feature", "type": "ref", "to": "Feature"},
+        {"name": "source", "type": "enum", "values": ["base", "custom"]},
+        {"name": "enabled", "type": "boolean"},
+        {"name": "status", "type": "string"}
+      ]
+    },
+    {
+      "name": "FeatureRequest",
+      "group": "governance",
+      "fields": [
+        {"name": "customer", "type": "ref", "to": "Customer"},
+        {"name": "title", "type": "string", "required": true},
+        {"name": "type", "type": "enum", "values": ["new", "modification", "enhancement", "bug"]},
+        {"name": "status", "type": "enum", "values": ["Requested", "Under review", "Approved", "In build", "Delivered", "Rejected"]},
+        {"name": "disposition", "type": "enum", "values": ["promote-to-core", "customer-specific", "under-decision"]},
+        {"name": "priority", "type": "enum", "values": ["Low", "Medium", "High"]},
+        {"name": "targetRelease", "type": "ref", "to": "Release"},
+        {"name": "linkedFeature", "type": "ref", "to": "Feature"},
+        {"name": "requestedAt", "type": "timestamp"}
+      ]
+    },
+
+    {
+      "name": "Blueprint",
+      "group": "builder",
+      "fields": [
+        {"name": "name", "type": "string", "required": true},
+        {"name": "sourceFdd", "type": "text"},
+        {"name": "status", "type": "enum", "values": ["extracting", "ready", "generating", "validated", "applied", "error"]},
+        {"name": "llm", "type": "string"},
+        {"name": "createdAt", "type": "timestamp"},
+        {"name": "product", "type": "ref", "to": "Product"}
+      ],
+      "relationships": ["has many BlueprintEntity, BlueprintPage, BlueprintFlow, BlueprintIntegration, GenerationRun"]
+    },
+    {
+      "name": "BlueprintEntity",
+      "group": "builder",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "description", "type": "string"},
+        {"name": "fieldsJson", "type": "text"},
+        {"name": "blueprint", "type": "ref", "to": "Blueprint"}
+      ]
+    },
+    {
+      "name": "BlueprintPage",
+      "group": "builder",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "pageType", "type": "enum", "values": ["list", "detail", "form", "dashboard"]},
+        {"name": "boundEntity", "type": "string"},
+        {"name": "componentsJson", "type": "text"},
+        {"name": "blueprint", "type": "ref", "to": "Blueprint"}
+      ]
+    },
+    {
+      "name": "BlueprintFlow",
+      "group": "builder",
+      "fields": [
+        {"name": "fromPage", "type": "string"},
+        {"name": "toPage", "type": "string"},
+        {"name": "trigger", "type": "string"},
+        {"name": "actionChain", "type": "string"},
+        {"name": "blueprint", "type": "ref", "to": "Blueprint"}
+      ]
+    },
+    {
+      "name": "BlueprintIntegration",
+      "group": "builder",
+      "fields": [
+        {"name": "name", "type": "string"},
+        {"name": "baseUrl", "type": "string"},
+        {"name": "endpointsJson", "type": "text"},
+        {"name": "authType", "type": "string"},
+        {"name": "blueprint", "type": "ref", "to": "Blueprint"}
+      ]
+    },
+    {
+      "name": "GenerationRun",
+      "group": "builder",
+      "fields": [
+        {"name": "blueprint", "type": "ref", "to": "Blueprint"},
+        {"name": "startedAt", "type": "timestamp"},
+        {"name": "status", "type": "enum", "values": ["running", "validated", "applied", "error"]},
+        {"name": "target", "type": "enum", "values": ["git", "archive", "spec"]},
+        {"name": "summaryJson", "type": "text"}
+      ],
+      "relationships": ["has many GeneratedArtifact, ValidationFinding"]
+    },
+    {
+      "name": "GeneratedArtifact",
+      "group": "builder",
+      "fields": [
+        {"name": "path", "type": "string"},
+        {"name": "kind", "type": "enum", "values": ["bo", "page", "flow", "service", "chain", "appflow"]},
+        {"name": "run", "type": "ref", "to": "GenerationRun"}
+      ]
+    },
+    {
+      "name": "ValidationFinding",
+      "group": "builder",
+      "fields": [
+        {"name": "artifactPath", "type": "string"},
+        {"name": "rule", "type": "string"},
+        {"name": "severity", "type": "enum", "values": ["pass", "warn", "fail"]},
+        {"name": "message", "type": "string"},
+        {"name": "run", "type": "ref", "to": "GenerationRun"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+<title>Control Tower Flows</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap">
+<style>
+/* Blueprint-style flow pack: themed chrome, each diagram on a light "drafting" card so mermaid stays legible in any theme. */
+:root{
+  --bg:#f5f3f1; --surface:#ffffff; --ink:#211b19; --muted:#6c615c; --border:#e4ddd8;
+  --accent:#c74634; --accent-weak:#f6e6e2; --card:#fbfaf8; --canvas:#ffffff; --canvas-ink:#1c1a19;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#191411; --surface:#231c19; --ink:#f3efec; --muted:#a89e98; --border:#39302b;
+  --accent:#e5806d; --accent-weak:#3a221c; --card:#2b231f; --canvas:#f7f5f2; --canvas-ink:#1c1a19; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#191411; --surface:#231c19; --ink:#f3efec; --muted:#a89e98; --border:#39302b;
+  --accent:#e5806d; --accent-weak:#3a221c; --card:#2b231f; --canvas:#f7f5f2; --canvas-ink:#1c1a19; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5;margin:0}
+.wrap{max-width:900px;margin:0 auto;padding:30px max(16px,env(safe-area-inset-right,0px)) 70px max(16px,env(safe-area-inset-left,0px))}
+header.top{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;flex:0 0 auto}
+h1{font-size:1.6rem;letter-spacing:-.02em;margin:0}
+.lead{color:var(--muted);font-size:.95rem;margin:2px 0 26px;max-width:62ch}
+.flow{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 18px 10px;margin-bottom:20px;box-shadow:0 1px 2px rgba(0,0,0,.05),0 6px 18px rgba(0,0,0,.04)}
+.flow h2{font-size:1.1rem;margin:0 0 3px;letter-spacing:-.01em}
+.flow .d{color:var(--muted);font-size:.88rem;margin:0 0 14px}
+.flow h2 .tag{font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);background:var(--accent-weak);padding:3px 8px;border-radius:999px;vertical-align:middle;margin-left:8px}
+.canvas{background:var(--canvas);border:1px solid var(--border);border-radius:11px;padding:14px;overflow-x:auto}
+.canvas pre.mermaid{margin:0;background:transparent;color:var(--canvas-ink);min-width:0;text-align:center}
+.note{font-size:.82rem;color:var(--muted);border-left:3px solid var(--accent);padding:6px 0 6px 12px;margin:22px 0 0}
+footer{margin-top:28px;color:var(--muted);font-size:.8rem;text-align:center}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">CT</div>
+    <h1>Control Tower — Process Flows</h1>
+  </header>
+  <p class="lead">The core journeys the product orchestrates — from feeding an FDD and having the AI build the app, through readiness, deployment and keeping monitoring live. Sample/conceptual flows.</p>
+
+  <section class="flow">
+    <h2>1 · End-to-end lifecycle</h2>
+    <p class="d">Every product travels this loop; Control Tower has a screen for each stage.</p>
+    <div class="canvas"><pre class="mermaid">
+flowchart LR
+  I["&#128161; Idea"] -->|score &amp; accept| R["&#128203; Requirements"]
+  R --> D["&#127912; Design"]
+  D --> B["&#128296; Build"]
+  B --> T["&#9989; Test"]
+  T --> Rel["&#128640; Release"]
+  Rel --> Op["&#128200; Operate"]
+  Op -->|feedback / new idea| I
+    </pre></div>
+  </section>
+
+  <section class="flow">
+    <h2>2 · FDD &rarr; components <span class="tag">AI interpreter</span></h2>
+    <p class="d">Feed an FDD; the AI extracts a Blueprint you review, then templates + AI generate the VBCS app, which is validated before it's applied — and auto-registered for monitoring.</p>
+    <div class="canvas"><pre class="mermaid">
+flowchart TD
+  F["Feed FDD text"] --> X["AI extracts a structured Blueprint"]
+  X --> R{"Human reviews &amp; edits Blueprint"}
+  R -- approve --> G["Generate VBCS artifacts: templates + AI"]
+  G --> V["Validate: binding rules + schema"]
+  V -- issues --> R
+  V -- clean --> A{"Apply"}
+  A --> Git["Commit to repo / VB Studio"]
+  A --> Arc["or export import archive"]
+  Git --> Reg["Auto-register as a Product"]
+  Reg --> Mon["Monitored through to release"]
+    </pre></div>
+  </section>
+
+  <section class="flow">
+    <h2>3 · AI builder pipeline <span class="tag">sequence</span></h2>
+    <p class="d">Who calls whom. Two mandatory human gates (Blueprint, pre-Apply); the LLM runs outside VBCS via a Service Connection.</p>
+    <div class="canvas"><pre class="mermaid">
+sequenceDiagram
+  participant U as You
+  participant CT as Control Tower
+  participant LLM as LLM
+  participant GEN as Generator
+  participant VAL as Validator
+  participant GIT as Repo / VB Studio
+  U->>CT: Ingest FDD
+  CT->>LLM: extract Blueprint (JSON)
+  LLM-->>CT: Blueprint
+  CT->>U: review Blueprint (edit)
+  U->>CT: approve
+  CT->>GEN: render artifacts
+  GEN->>LLM: fill bindings / copy
+  GEN-->>CT: BO + pages + flows + chains
+  CT->>VAL: check rules + schema
+  VAL-->>CT: findings
+  CT->>U: review, then apply
+  CT->>GIT: commit / import
+  CT->>CT: auto-register product
+    </pre></div>
+  </section>
+
+  <section class="flow">
+    <h2>4 · Release readiness (gate evaluation)</h2>
+    <p class="d">The signature monitor flow: gates sync from GitHub/Jira, a weighted score decides go/no-go.</p>
+    <div class="canvas"><pre class="mermaid">
+flowchart TD
+  S["Open release"] --> Sync["Sync gates: GitHub + Jira"]
+  Sync --> G1["Tests green?"]
+  Sync --> G2["Acceptance criteria present?"]
+  Sync --> G3["Changelog + version bumped?"]
+  Sync --> G5["Deployed to Test?"]
+  Sync --> G6["No open blockers?"]
+  G1 & G2 & G3 & G5 & G6 --> Calc["Weighted score"]
+  Calc --> D{">= threshold &amp; no blocking fail?"}
+  D -- Yes --> Rdy["&#128994; Ready to release"]
+  D -- No --> Blk["&#128308; Blocked / &#128993; warnings"]
+    </pre></div>
+  </section>
+
+  <section class="flow">
+    <h2>5 · Data sync (how monitoring stays live)</h2>
+    <p class="d">Incremental, cached, idempotent — so pages are fast and API rate limits are respected.</p>
+    <div class="canvas"><pre class="mermaid">
+sequenceDiagram
+  participant T as Trigger (on-open / Sync now / cron)
+  participant AC as Action Chain
+  participant SC as Service Connection
+  participant EX as GitHub / Jira / VB Studio
+  participant BO as Business Objects
+  T->>AC: run sync
+  AC->>SC: GET changes since lastSync
+  SC->>EX: REST call
+  EX-->>SC: data
+  SC-->>AC: mapped payload
+  AC->>BO: upsert records
+  AC->>BO: write activity log
+  AC->>BO: set lastSync = now
+  AC-->>T: counts + errors
+    </pre></div>
+  </section>
+
+  <section class="flow">
+    <h2>6 · Deployment &amp; rollback</h2>
+    <p class="d">Non-prod first (mirrors how Oracle updates Fusion pods), with a rollback path.</p>
+    <div class="canvas"><pre class="mermaid">
+flowchart LR
+  Dev["Dev"] -->|build passes| Test["Test"]
+  Test -->|UAT + readiness OK| Prod["Prod"]
+  Prod -->|if broken| RB["Roll back to previous version"]
+  RB --> Prod
+    </pre></div>
+  </section>
+
+  <p class="note">Two human checkpoints guard the AI builder (approve the Blueprint, approve before Apply), and nothing deploys to production automatically. The generator uses templates for VBCS metadata and the LLM for interpretation, so output obeys VBCS binding rules.</p>
+  <footer>Control Tower · conceptual process flows · v0.1</footer>
+</div>

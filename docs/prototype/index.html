@@ -1,0 +1,766 @@
+<title>Control Tower</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: fixed left menu + sticky topbar + swappable views. Redwood-flavoured enterprise cockpit. */
+:root{
+  --bg:#f5f3f1; --surface:#ffffff; --surface-2:#faf8f6; --ink:#211b19; --muted:#6c615c;
+  --border:#e4ddd8; --accent:#c74634; --accent-weak:#f6e6e2; --on-accent:#ffffff;
+  --good:#2e7d53; --good-weak:#e2f0e8; --warn:#b26a00; --warn-weak:#f7ecd9; --crit:#c23b2e; --crit-weak:#f8e3e0;
+  --shadow:0 1px 2px rgba(33,27,25,.06),0 4px 14px rgba(33,27,25,.05);
+  --r:14px; --r-sm:9px;
+  --fnt:"Hanken Grotesk",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#191411; --surface:#231c19; --surface-2:#2b231f; --ink:#f3efec; --muted:#a89e98;
+  --border:#39302b; --accent:#e5806d; --accent-weak:#3a221c; --on-accent:#2a0f0a;
+  --good:#5bbd86; --good-weak:#1d3328; --warn:#e0a44a; --warn-weak:#352a18; --crit:#f08a7d; --crit-weak:#3a211d;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.28); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#191411; --surface:#231c19; --surface-2:#2b231f; --ink:#f3efec; --muted:#a89e98;
+  --border:#39302b; --accent:#e5806d; --accent-weak:#3a221c; --on-accent:#2a0f0a;
+  --good:#5bbd86; --good-weak:#1d3328; --warn:#e0a44a; --warn-weak:#352a18; --crit:#f08a7d; --crit-weak:#3a211d;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.28); color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--fnt);line-height:1.45;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--surface);z-index:60}
+h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.2}
+p{margin:0}
+a{color:inherit}
+button{font-family:inherit}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* shell */
+.app{display:flex;min-height:100%}
+.sidebar{flex:0 0 236px;width:236px;background:var(--surface);border-right:1px solid var(--border);
+  position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;display:flex;flex-direction:column;z-index:50}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 18px 14px;padding-left:max(18px,env(safe-area-inset-left,0px))}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:800;flex:0 0 auto}
+.brand b{font-size:1.02rem;font-weight:800;letter-spacing:-.01em}
+.brand span{display:block;font-size:.68rem;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.nav{display:flex;flex-direction:column;gap:2px;padding:6px 10px;padding-left:max(10px,env(safe-area-inset-left,0px))}
+.nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-sm);color:var(--muted);
+  text-decoration:none;font-weight:600;font-size:.9rem;cursor:pointer;border:1px solid transparent}
+.nav a .ic{width:18px;text-align:center;font-size:1rem}
+.nav a:hover{background:var(--surface-2);color:var(--ink)}
+.nav a.active{background:var(--accent-weak);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 24%,transparent)}
+.nav .sec{font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;padding:14px 11px 5px}
+.side-foot{margin-top:auto;padding:14px 16px;font-size:.72rem;color:var(--muted);border-top:1px solid var(--border)}
+
+.main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:color-mix(in srgb,var(--surface) 90%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;
+  padding:11px max(16px,env(safe-area-inset-right,0px)) 11px max(16px,env(safe-area-inset-left,0px))}
+.hamb{display:none;background:var(--surface-2);border:1px solid var(--border);color:var(--ink);width:38px;height:38px;border-radius:9px;font-size:1.1rem;cursor:pointer}
+.search{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:10px;padding:8px 12px;color:var(--muted);max-width:420px}
+.search input{border:0;background:transparent;color:var(--ink);font-family:inherit;font-size:.9rem;width:100%;outline:none}
+.sync{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--muted);font-weight:600;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.dot.ok{background:var(--good)} .dot.warn{background:var(--warn)} .dot.crit{background:var(--crit)} .dot.na{background:var(--muted);opacity:.5}
+.icbtn{background:var(--surface-2);border:1px solid var(--border);color:var(--ink);width:38px;height:38px;border-radius:9px;cursor:pointer;font-size:1rem;flex:0 0 auto}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#8f2f22);color:#fff;display:grid;place-items:center;font-weight:700;font-size:.82rem;flex:0 0 auto}
+
+.content{padding:22px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px));max-width:1240px;width:100%}
+.view[hidden]{display:none!important}
+.phead{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.phead h1{font-size:1.55rem;letter-spacing:-.02em}
+.phead .sub{color:var(--muted);font-size:.9rem;margin-top:3px}
+.sample{display:inline-flex;align-items:center;gap:6px;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--warn);background:var(--warn-weak);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);padding:3px 9px;border-radius:999px}
+
+.btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:var(--on-accent);border:0;border-radius:10px;
+  padding:9px 15px;font-weight:700;font-size:.88rem;cursor:pointer}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--border)}
+.btn.sm{padding:6px 11px;font-size:.8rem}
+
+/* cards & grids */
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(4,1fr);margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px 16px;box-shadow:var(--shadow)}
+.kpi .n{font-size:1.9rem;font-weight:800;letter-spacing:-.02em}
+.kpi .l{font-size:.78rem;color:var(--muted);font-weight:600;margin-top:2px}
+.kpi .tr{font-size:.74rem;font-weight:700;margin-top:6px}
+.up{color:var(--good)} .down{color:var(--crit)}
+
+.prods{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);
+  cursor:pointer;text-align:left;font:inherit;color:inherit;transition:transform .12s ease,box-shadow .12s ease;display:flex;flex-direction:column;gap:12px}
+.pcard:hover{transform:translateY(-2px);box-shadow:0 2px 6px rgba(33,27,25,.1),0 12px 26px rgba(33,27,25,.1)}
+.pcard .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.pcard h3{font-size:1.08rem;letter-spacing:-.01em}
+.pcard .tag{font-size:.74rem;color:var(--muted);font-weight:600}
+.ring{--p:0;--c:var(--muted);width:46px;height:46px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+  background:conic-gradient(var(--c) calc(var(--p)*1%),var(--border) 0)}
+.ring i{width:36px;height:36px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:.72rem;font-weight:800;font-style:normal}
+.pcard .meta{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.8rem;color:var(--muted);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.73rem;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2)}
+.chip.phase{color:var(--accent);background:var(--accent-weak);border-color:color-mix(in srgb,var(--accent) 22%,transparent)}
+.rbar{height:7px;border-radius:999px;background:var(--border);overflow:hidden}
+.rbar i{display:block;height:100%;border-radius:999px}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+.panel h2{font-size:1.05rem;margin-bottom:4px}
+.panel .ph-sub{color:var(--muted);font-size:.84rem;margin-bottom:14px}
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
+
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
+.tablewrap table th,.tablewrap table td{border-bottom:1px solid var(--border)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:700;padding:3px 9px;border-radius:999px}
+.badge.ok{color:var(--good);background:var(--good-weak)} .badge.warn{color:var(--warn);background:var(--warn-weak)}
+.badge.crit{color:var(--crit);background:var(--crit-weak)} .badge.na{color:var(--muted);background:var(--surface-2)}
+
+/* phase stepper */
+.stepper{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 2px}
+.step{flex:1 1 96px;min-width:92px;padding:9px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);
+  font-size:.78rem;font-weight:700;color:var(--muted);position:relative}
+.step.done{color:var(--good);background:var(--good-weak);border-color:color-mix(in srgb,var(--good) 26%,transparent)}
+.step.now{color:var(--accent);background:var(--accent-weak);border-color:var(--accent)}
+.step small{display:block;font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;opacity:.8}
+
+/* gates / readiness */
+.readhead{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.bigring{--p:0;--c:var(--good);width:118px;height:118px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+  background:conic-gradient(var(--c) calc(var(--p)*1%),var(--border) 0)}
+.bigring i{width:92px;height:92px;border-radius:50%;background:var(--surface);display:grid;place-items:center;flex-direction:column;font-style:normal}
+.bigring b{font-size:1.7rem;font-weight:800} .bigring em{font-size:.7rem;color:var(--muted);font-weight:700;font-style:normal;text-transform:uppercase;letter-spacing:.05em}
+.gate{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid var(--border)}
+.gate:last-child{border-bottom:0}
+.gate .gi{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:800;flex:0 0 auto}
+.gi.ok{background:var(--good-weak);color:var(--good)} .gi.warn{background:var(--warn-weak);color:var(--warn)} .gi.crit{background:var(--crit-weak);color:var(--crit)}
+.gate .gt{font-weight:700;font-size:.9rem} .gate .gd{font-size:.78rem;color:var(--muted)} .gate .src{margin-left:auto;font-size:.72rem;color:var(--muted);font-weight:600}
+
+/* board */
+.board{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:12px;overflow-x:auto;padding-bottom:6px}
+.col{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:10px;min-width:150px}
+.col h4{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:9px;display:flex;justify-content:space-between}
+.bcard{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px;margin-bottom:8px;box-shadow:var(--shadow);cursor:pointer}
+.bcard b{font-size:.86rem} .bcard .m{font-size:.72rem;color:var(--muted);margin-top:3px}
+
+/* calendar */
+.train{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;overflow-x:auto}
+.q{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;min-width:150px;box-shadow:var(--shadow)}
+.q h4{font-size:.95rem;display:flex;align-items:center;gap:8px}
+.q .when{font-size:.72rem;color:var(--muted);font-weight:600;margin-bottom:8px}
+.q.now{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-weak)}
+.rel{font-size:.78rem;background:var(--accent-weak);color:var(--accent);border-radius:8px;padding:6px 8px;margin-top:6px;font-weight:700}
+.rel.done{background:var(--good-weak);color:var(--good)} .rel.plan{background:var(--surface-2);color:var(--muted)}
+
+/* integrations */
+.ints{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.int{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.int .h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.int .h .g{width:38px;height:38px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;font-size:1.1rem}
+.int b{font-size:1rem} .int .st{font-size:.8rem;color:var(--muted);margin:2px 0 12px}
+
+/* forms (admin) */
+.field{margin-bottom:13px} .field label{display:block;font-size:.8rem;font-weight:700;margin-bottom:5px}
+.field input,.field select{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);color:var(--ink);font-family:inherit;font-size:.88rem}
+.hint{font-size:.76rem;color:var(--muted);margin-top:4px}
+.checklist{display:flex;flex-direction:column;gap:7px}
+.checklist .ci{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);font-size:.86rem;font-weight:600}
+.spectabs{display:flex;gap:4px;flex-wrap:wrap;margin:2px 0 14px;border-bottom:1px solid var(--border)}
+.spectabs button{background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font:inherit;font-weight:700;font-size:.85rem;padding:7px 10px;cursor:pointer}
+.spectabs button.active{color:var(--accent);border-bottom-color:var(--accent)}
+.doclist{display:flex;flex-direction:column;gap:8px}
+.docrow{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}
+.docrow .dt{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:.66rem;flex:0 0 auto;background:var(--accent-weak);color:var(--accent)}
+.docrow b{font-size:.9rem} .docrow .meta2{font-size:.76rem;color:var(--muted)} .docrow .open{margin-left:auto;font-size:.8rem;font-weight:700;color:var(--accent);cursor:pointer;white-space:nowrap}
+.speclist{display:flex;flex-direction:column;gap:7px}
+.specitem{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);font-size:.86rem}
+.specitem .k{font-weight:700} .specitem .muted{color:var(--muted)} .specitem .pill{margin-left:auto}
+.specempty{color:var(--muted);font-size:.86rem;padding:12px 2px}
+.scrim{display:none}
+@media (max-width:860px){
+  .two{grid-template-columns:1fr} .kpis{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:760px){
+  .hamb{display:grid;place-items:center}
+  .sidebar{position:fixed;left:0;top:0;height:100%;transform:translateX(-100%);transition:transform .2s ease;
+    padding-left:env(safe-area-inset-left,0px);box-shadow:0 0 40px rgba(0,0,0,.3)}
+  .app.open .sidebar{transform:translateX(0)}
+  .app.open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:45}
+  .sync .txt{display:none}
+}
+@media (max-width:430px){ .kpis{grid-template-columns:1fr 1fr} .search{display:none} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="app" id="app">
+  <div class="scrim" id="scrim"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo">CT</div>
+      <div><b>Control&nbsp;Tower</b><span>Lifecycle cockpit</span></div>
+    </div>
+    <nav class="nav" id="nav">
+      <a data-view="portfolio" class="active"><span class="ic">▦</span> Portfolio</a>
+      <a data-view="ideas"><span class="ic">💡</span> Ideas &amp; Backlog</a>
+      <a data-view="board"><span class="ic">🧭</span> Lifecycle Board</a>
+      <a data-view="specs"><span class="ic">📐</span> Design &amp; Spec</a>
+      <div class="sec">Delivery</div>
+      <a data-view="releases"><span class="ic">🚀</span> Releases</a>
+      <a data-view="compare"><span class="ic">⇄</span> Compare releases</a>
+      <a data-view="cicd"><span class="ic">🔁</span> CI / CD</a>
+      <a data-view="readiness"><span class="ic">✅</span> Release Readiness</a>
+      <a data-view="versions"><span class="ic">#</span> Version Matrix</a>
+      <a data-view="calendar"><span class="ic">📅</span> Calendar</a>
+      <div class="sec">Customers</div>
+      <a data-view="customers"><span class="ic">🏢</span> Customers</a>
+      <a data-view="features"><span class="ic">🧩</span> Features &amp; demand</a>
+      <a data-view="enhancements"><span class="ic">📨</span> Enhancements</a>
+      <div class="sec">Setup</div>
+      <a data-view="integrations"><span class="ic">🔌</span> Integrations</a>
+      <a data-view="admin"><span class="ic">⚙</span> Admin</a>
+    </nav>
+    <div class="side-foot">Prototype · sample data<br>v0.1 concept</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamb" id="hamb" aria-label="Menu">☰</button>
+      <div class="search"><span>⌕</span><input placeholder="Search products, releases, ideas…" aria-label="Search"></div>
+      <div class="sync"><span class="dot ok"></span><span class="txt">Synced 5m ago</span></div>
+      <button class="icbtn" id="theme" aria-label="Toggle theme">◐</button>
+      <div class="avatar" title="You">KN</div>
+    </header>
+
+    <div class="content">
+
+      <!-- PORTFOLIO -->
+      <section class="view" id="view-portfolio">
+        <div class="phead">
+          <div><h1>Portfolio</h1><div class="sub">Every product, every phase — at a glance</div></div>
+          <span class="sample">● Sample data</span>
+        </div>
+        <div class="grid kpis">
+          <div class="kpi"><div class="n">4</div><div class="l">Products</div><div class="tr up">+1 this quarter</div></div>
+          <div class="kpi"><div class="n">2</div><div class="l">In build / test</div><div class="tr">Control Tower, InvoicePro</div></div>
+          <div class="kpi"><div class="n">3</div><div class="l">Releasing this quarter</div><div class="tr">26C–26D</div></div>
+          <div class="kpi"><div class="n">6</div><div class="l">Open risks</div><div class="tr down">2 high</div></div>
+        </div>
+        <div class="grid prods" id="prodGrid"></div>
+      </section>
+
+      <!-- PRODUCT 360 -->
+      <section class="view" id="view-product" hidden>
+        <div class="phead">
+          <div>
+            <a class="chip" id="backToPortfolio" style="cursor:pointer;text-decoration:none">← Portfolio</a>
+            <h1 id="p360name" style="margin-top:8px">Product</h1>
+            <div class="sub" id="p360tag"></div>
+          </div>
+          <div style="display:flex;gap:8px"><button class="btn ghost sm">Open repo ↗</button><button class="btn sm">New release</button></div>
+        </div>
+        <div class="panel">
+          <h2>Lifecycle</h2><div class="ph-sub">Where this product is in its journey</div>
+          <div class="stepper" id="p360steps"></div>
+        </div>
+        <div class="two">
+          <div>
+            <div class="panel">
+              <h2>Components &amp; versions</h2><div class="ph-sub">Each shippable piece and what's live</div>
+              <div class="tablewrap"><table><thead><tr><th>Component</th><th>Type</th><th>Latest</th><th>In production</th></tr></thead><tbody id="p360comp"></tbody></table></div>
+            </div>
+            <div class="panel">
+              <h2>Environments</h2><div class="ph-sub">What's deployed where</div>
+              <div class="tablewrap"><table><thead><tr><th>Env</th><th>Deployed</th><th>When</th><th>Health</th></tr></thead><tbody id="p360env"></tbody></table></div>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <h2>Readiness</h2><div class="ph-sub">Next release go / no‑go</div>
+              <div style="display:flex;align-items:center;gap:14px"><div class="ring" id="p360ring"><i id="p360ringv"></i></div><div><div id="p360rel" style="font-weight:700"></div><div class="sub" id="p360reltxt"></div></div></div>
+            </div>
+            <div class="panel">
+              <h2>Current sprint</h2><div class="ph-sub" id="p360sprint"></div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <div class="chip">🔗 Repo <span class="mono" id="p360repo" style="margin-left:auto"></span></div>
+                <div class="chip">📋 Jira board ↗</div>
+                <div class="chip">🏗 VB Studio project ↗</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" id="specPanel">
+          <h2>Design &amp; Spec</h2><div class="ph-sub">Everything that defines this product — stored in Control Tower (RD / FDD / TDD, features, data objects, pages, APIs)</div>
+          <div class="spectabs" id="specTabs">
+            <button data-t="docs" class="active">Documents</button>
+            <button data-t="features">Features</button>
+            <button data-t="data">Data objects</button>
+            <button data-t="pages">Pages</button>
+            <button data-t="apis">APIs</button>
+          </div>
+          <div id="specBody"></div>
+        </div>
+      </section>
+
+      <!-- IDEAS -->
+      <section class="view" id="view-ideas" hidden>
+        <div class="phead"><div><h1>Ideas &amp; Backlog</h1><div class="sub">Where products and features begin — capture, score, promote</div></div><button class="btn">+ New idea</button></div>
+        <div class="tablewrap"><table><thead><tr><th>Idea</th><th>Value</th><th>Effort</th><th>Score</th><th>Status</th></tr></thead><tbody id="ideaRows"></tbody></table></div>
+      </section>
+
+      <!-- BOARD -->
+      <section class="view" id="view-board" hidden>
+        <div class="phead"><div><h1>Lifecycle Board</h1><div class="sub">The whole portfolio by phase — drag to advance (concept)</div></div><span class="sample">● Sample data</span></div>
+        <div class="board" id="board"></div>
+      </section>
+
+      <!-- RELEASES -->
+      <section class="view" id="view-releases" hidden>
+        <div class="phead"><div><h1>Releases</h1><div class="sub">Every release across every product</div></div><button class="btn">+ New release</button></div>
+        <div class="tablewrap"><table><thead><tr><th>Product</th><th>Version</th><th>Target</th><th>Train</th><th>State</th><th>Readiness</th></tr></thead><tbody id="relRows"></tbody></table></div>
+      </section>
+
+      <!-- READINESS -->
+      <section class="view" id="view-readiness" hidden>
+        <div class="phead"><div><h1>Release Readiness</h1><div class="sub">EquipRite 2026.1 · web 1.3.0 · train 26C</div></div><button class="btn ghost">Change release ▾</button></div>
+        <div class="panel">
+          <div class="readhead">
+            <div class="bigring" style="--p:88;--c:var(--good)"><i><b>88%</b><em>Ready</em></i></div>
+            <div style="flex:1 1 260px;min-width:200px">
+              <h2 style="margin-bottom:6px">Almost there</h2>
+              <p class="ph-sub" style="margin:0">5 of 6 gates pass. One warning: 3 stories still have no acceptance criteria. Clear it to go green.</p>
+              <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Mark released</button><button class="btn ghost">Re‑sync gates</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Quality gates</h2><div class="ph-sub">Auto‑checked from GitHub &amp; Jira, or ticked by hand</div>
+          <div id="gates"></div>
+        </div>
+      </section>
+
+      <!-- VERSIONS -->
+      <section class="view" id="view-versions" hidden>
+        <div class="phead"><div><h1>Version Matrix</h1><div class="sub">The live answer to "what version is everything?" · <span style="color:var(--good)">●</span> live in prod</div></div><span class="sample">● Sample data</span></div>
+        <div class="tablewrap"><table><thead><tr><th>Product</th><th>Web</th><th>Mobile</th><th>Desktop</th><th>Integration / API</th><th>Suite</th></tr></thead><tbody id="verRows"></tbody></table></div>
+      </section>
+
+      <!-- CALENDAR -->
+      <section class="view" id="view-calendar" hidden>
+        <div class="phead"><div><h1>Release Calendar</h1><div class="sub">Your releases on Oracle's quarterly train — never ship blind into a pod update</div></div></div>
+        <div class="train" id="train"></div>
+      </section>
+
+      <!-- INTEGRATIONS -->
+      <section class="view" id="view-integrations" hidden>
+        <div class="phead"><div><h1>Integrations</h1><div class="sub">Live data instead of manual entry</div></div><button class="btn">+ Add connection</button></div>
+        <div class="grid ints" id="ints"></div>
+      </section>
+
+      <!-- DESIGN & SPEC -->
+      <section class="view" id="view-specs" hidden>
+        <div class="phead"><div><h1>Design &amp; Spec</h1><div class="sub">Every product's RD / FDD / TDD, features, data objects, pages and APIs — stored in Control Tower</div></div><span class="sample">● Sample data</span></div>
+        <div class="panel">
+          <div id="specProds" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
+          <div class="spectabs" id="specTabs2">
+            <button data-t="docs" class="active">Documents</button>
+            <button data-t="features">Features</button>
+            <button data-t="data">Data objects</button>
+            <button data-t="pages">Pages</button>
+            <button data-t="apis">APIs</button>
+          </div>
+          <div id="specBody2"></div>
+        </div>
+      </section>
+
+      <!-- COMPARE RELEASES -->
+      <section class="view" id="view-compare" hidden>
+        <div class="phead"><div><h1>Compare releases</h1><div class="sub">What changed between two releases — features and pages added, changed or removed</div></div></div>
+        <div class="panel"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn ghost sm">EquipRite 2025.4 (1.2.4) ▾</button><span style="color:var(--muted)">→</span><button class="btn ghost sm">EquipRite 2026.1 (1.3.0) ▾</button></div></div>
+        <div class="panel"><h2 style="color:var(--good)">＋ Added</h2><div class="ph-sub">New in 2026.1</div><div id="cmpAdd"></div></div>
+        <div class="panel"><h2 style="color:var(--warn)">✎ Changed</h2><div id="cmpChg"></div></div>
+        <div class="panel"><h2 style="color:var(--muted)">－ Removed / deprecated</h2><div id="cmpRem"></div></div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section class="view" id="view-customers" hidden>
+        <div class="phead"><div><h1>Customers</h1><div class="sub">Who runs the product, what version/release they're on, and their open requests · EquipRite</div></div><button class="btn">+ Register customer</button></div>
+        <div class="grid kpis">
+          <div class="kpi"><div class="n">4</div><div class="l">Customers</div><div class="tr">3 external · 1 internal</div></div>
+          <div class="kpi"><div class="n">2</div><div class="l">Versions in the field</div><div class="tr">1.3.0 · 1.2.4</div></div>
+          <div class="kpi"><div class="n">11</div><div class="l">Open requests</div><div class="tr">across all customers</div></div>
+          <div class="kpi"><div class="n">4</div><div class="l">Customer-specific feat.</div><div class="tr up">2 promote candidates</div></div>
+        </div>
+        <div class="tablewrap"><table><thead><tr><th>Customer</th><th>Type</th><th>Deployed version</th><th>Release</th><th>Env</th><th>Base feat.</th><th>Custom</th><th>Open req.</th></tr></thead><tbody id="custRows"></tbody></table></div>
+      </section>
+
+      <!-- CUSTOMER 360 -->
+      <section class="view" id="view-customer" hidden>
+        <div class="phead"><div><a class="chip" id="backToCustomers" style="cursor:pointer;text-decoration:none">← Customers</a><h1 id="c360name" style="margin-top:8px">Customer</h1><div class="sub" id="c360tag"></div></div><button class="btn">Upgrade version ▾</button></div>
+        <div class="two">
+          <div>
+            <div class="panel"><h2>Deployment</h2><div class="ph-sub">What's live for this customer</div><div id="c360deploy"></div></div>
+            <div class="panel"><h2>Features</h2><div class="ph-sub">Base (from their version) + customer-specific</div><div id="c360features"></div></div>
+          </div>
+          <div class="panel"><h2>Enhancement requests</h2><div class="ph-sub">What they've asked for, and its status</div><div id="c360reqs"></div></div>
+        </div>
+      </section>
+
+      <!-- FEATURES & DEMAND -->
+      <section class="view" id="view-features" hidden>
+        <div class="phead"><div><h1>Features &amp; demand</h1><div class="sub">Base vs customer-specific, which release introduced each, and how many customers have or want it</div></div><span class="sample">● Sample data</span></div>
+        <div class="grid kpis">
+          <div class="kpi"><div class="n">5</div><div class="l">Core features</div><div class="tr">in the base codebase</div></div>
+          <div class="kpi"><div class="n">2</div><div class="l">Customer-specific</div><div class="tr">one customer only</div></div>
+          <div class="kpi"><div class="n">2</div><div class="l">Promote candidates</div><div class="tr up">asked by ≥ 2 customers</div></div>
+          <div class="kpi"><div class="n">4</div><div class="l">Common to all</div><div class="tr">every customer</div></div>
+        </div>
+        <div class="panel">
+          <h2>Feature × customer matrix</h2><div class="ph-sub">● = customer has / wants it. A full row = common (promote); a single ● = customer-specific.</div>
+          <div class="tablewrap"><table><thead><tr><th>Feature</th><th>Type</th><th>Intro</th><th>Acme</th><th>Globex</th><th>Initech</th><th>Umbrella</th><th>Demand</th></tr></thead><tbody id="featRows"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ENHANCEMENTS -->
+      <section class="view" id="view-enhancements" hidden>
+        <div class="phead"><div><h1>Enhancement requests</h1><div class="sub">Every customer ask, its status, and whether it goes into the core product or stays customer-specific</div></div><button class="btn">+ Log request</button></div>
+        <div class="tablewrap"><table><thead><tr><th>Customer</th><th>Request</th><th>Type</th><th>Status</th><th>Disposition</th><th>Target release</th></tr></thead><tbody id="reqRows"></tbody></table></div>
+        <div class="panel" style="margin-top:14px"><div class="ph-sub" style="margin:0">Disposition decides the codebase: <span class="chip phase">Promote to core</span> → base feature in a future release (all customers) · <span class="chip">Customer-specific</span> → stays a per-customer extension · <span class="badge warn">Under decision</span> → not yet triaged.</div></div>
+      </section>
+
+      <!-- CI/CD -->
+      <section class="view" id="view-cicd" hidden>
+        <div class="phead"><div><h1>CI / CD pipelines</h1><div class="sub">Trigger and watch builds &amp; deployments — executed in VB Studio / GitHub Actions, orchestrated here</div></div><button class="btn">+ Connect pipeline</button></div>
+        <div class="grid kpis">
+          <div class="kpi"><div class="n">18</div><div class="l">Builds today</div><div class="tr up">89% success</div></div>
+          <div class="kpi"><div class="n">4m 02s</div><div class="l">Avg build time</div></div>
+          <div class="kpi"><div class="n">2.3/wk</div><div class="l">Deploy frequency</div><div class="tr">DORA</div></div>
+          <div class="kpi"><div class="n">1</div><div class="l">Failing now</div><div class="tr down">InvoicePro web-ci</div></div>
+        </div>
+        <div class="tablewrap"><table><thead><tr><th>Product</th><th>Pipeline</th><th>Engine</th><th>Last run</th><th>Duration</th><th>When</th><th>Trigger</th><th></th></tr></thead><tbody id="cicdRows"></tbody></table></div>
+        <div class="panel" style="margin-top:14px"><div class="ph-sub" style="margin:0">Control Tower <b>triggers, watches and gates</b> pipelines and records deploy history + DORA metrics. The build/test/deploy itself <b>runs in the engine</b> (VB Studio for VBCS apps, GitHub Actions for packaged apps) — VBCS has no build runners, so execution is delegated, not duplicated.</div></div>
+      </section>
+
+      <!-- ADMIN -->
+      <section class="view" id="view-admin" hidden>
+        <div class="phead"><div><h1>Admin</h1><div class="sub">Register products and define your standard gates</div></div></div>
+        <div class="two">
+          <div class="panel">
+            <h2>Register a product</h2><div class="ph-sub">Starts it in the portfolio with your standard checklist</div>
+            <div class="field"><label>Product name</label><input placeholder="e.g. FleetTrack"></div>
+            <div class="field"><label>Git repository</label><input placeholder="javeedin/…"></div>
+            <div class="field"><label>Jira project key</label><input placeholder="e.g. FLT"></div>
+            <div class="field"><label>Starting phase</label><select><option>Idea</option><option>Requirements</option><option>Design</option><option>Build</option></select></div>
+            <button class="btn">Register product</button>
+          </div>
+          <div class="panel">
+            <h2>Standard gate template</h2><div class="ph-sub">Applied to every new release</div>
+            <div class="checklist">
+              <div class="ci"><span class="dot ok"></span>Tests green (auto · GitHub Actions)</div>
+              <div class="ci"><span class="dot ok"></span>Acceptance criteria present (auto · Jira)</div>
+              <div class="ci"><span class="dot ok"></span>CHANGELOG updated (auto · repo)</div>
+              <div class="ci"><span class="dot ok"></span>Version bumped (auto · manifest)</div>
+              <div class="ci"><span class="dot ok"></span>Deployed to Test (manual)</div>
+              <div class="ci"><span class="dot ok"></span>No open blockers (auto · Jira)</div>
+            </div>
+            <div class="hint">Each gate feeds the readiness score. Weights are configurable.</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const PHASES=["Idea","Requirements","Design","Build","Test","Release"];
+const products=[
+ {id:"ct",name:"Control Tower",tag:"Internal tool",phase:"Build",readiness:72,rel:"v0.1 · train 26D",reltxt:"Planned · 3 gates open",risks:1,repo:"javeedin/controltower",sprint:"Sprint 1 · Portfolio + Product 360",
+  comp:[{n:"Web app",t:"VBCS",v:"0.1.0",live:"—"}],
+  env:[{n:"Dev",v:"0.1.0",w:"today",h:"ok"},{n:"Test",v:"—",w:"—",h:"na"},{n:"Prod",v:"—",w:"—",h:"na"}]},
+ {id:"eqp",name:"EquipRite",tag:"Equipment rental mgmt",phase:"Release",readiness:88,rel:"2026.1 · train 26C",reltxt:"In progress · 5/6 gates",risks:0,repo:"javeedin/equiprite-rebuild",sprint:"Sprint 2026‑07 · Picking & trace",
+  comp:[{n:"Web (Next)",t:"VBCS",v:"1.3.0",live:"1.2.4"},{n:"Mobile",t:"VBCS/PWA",v:"1.1",live:"1.1"},{n:"Desktop",t:"Electron",v:"0.4.0",live:"0.3.1"},{n:"Android",t:"APK",v:"1.1 (2)",live:"1.1 (2)"}],
+  env:[{n:"Dev",v:"1.3.0",w:"2d ago",h:"ok"},{n:"Test",v:"1.3.0",w:"1d ago",h:"ok"},{n:"Prod",v:"1.2.4",w:"3w ago",h:"ok"}]},
+ {id:"ft",name:"FleetTrack",tag:"Telematics",phase:"Idea",readiness:null,rel:"—",reltxt:"Not scoped yet",risks:2,repo:"—",sprint:"—",comp:[],env:[]},
+ {id:"inv",name:"InvoicePro",tag:"Billing",phase:"Test",readiness:54,rel:"v2.0 · train 26D",reltxt:"In progress · 3 blockers",risks:3,repo:"javeedin/invoicepro",sprint:"Sprint 14 · UAT fixes",
+  comp:[{n:"Web app",t:"VBCS",v:"2.0.0‑rc1",live:"1.4.2"},{n:"Integration",t:"OIC",v:"2.0.0",live:"1.4.0"}],
+  env:[{n:"Dev",v:"2.0.0‑rc1",w:"5h ago",h:"ok"},{n:"Test",v:"2.0.0‑rc1",w:"5h ago",h:"warn"},{n:"Prod",v:"1.4.2",w:"2mo ago",h:"ok"}]},
+];
+const spec={
+ ct:{
+   docs:[{k:"RD",n:"Requirements Document",m:"v0.1 · updated today"},{k:"FDD",n:"Functional Design",m:"16 screens · today"},{k:"TDD",n:"Technical Design",m:"data model + AI builder · today"},{k:"ADR",n:"ADR‑001 · VBCS + external LLM",m:"accepted"}],
+   features:["Portfolio dashboard","Product 360","Release Readiness score","Version matrix","AI FDD Interpreter (Blueprint Studio)","DORA metrics","Activity log"],
+   entities:[{n:"Product",f:9},{n:"Release",f:7},{n:"Gate",f:5},{n:"Environment",f:6},{n:"Blueprint",f:6},{n:"GenerationRun",f:5},{n:"ProductDoc",f:6}],
+   pages:[{n:"Portfolio",t:"dashboard"},{n:"Product 360",t:"detail"},{n:"Release Readiness",t:"detail"},{n:"Blueprint Studio",t:"wizard"},{n:"Version Matrix",t:"table"}],
+   apis:[{n:"GitHub",e:"repos, actions, tags",s:"Connected",c:"ok"},{n:"Jira",e:"issues, sprints",s:"Connected",c:"ok"},{n:"VB Studio",e:"builds, deploys",s:"Not set",c:"na"},{n:"LLM",e:"extract + generate",s:"Connected",c:"ok"}],
+ },
+ eqp:{
+   docs:[{k:"FDD",n:"EquipRite FDD v2.0",m:"multi‑company · 2w ago"},{k:"RD",n:"Redesign brief",m:"Redwood IA · 1mo ago"},{k:"TDD",n:"Architecture notes",m:"VBCS + Electron + Android"},{k:"ADR",n:"ADR · 5‑app structure",m:"accepted"}],
+   features:["My requests","Approve & allocate","Pick & ship","Rates & compare","Availability yard","Jira stories + Record","SQL worksheet + Ask AI"],
+   entities:[{n:"Request",f:12},{n:"RequestLine",f:8},{n:"Equipment",f:14},{n:"Customer",f:10},{n:"Project",f:7},{n:"RateSchedule",f:9}],
+   pages:[{n:"My work",t:"dashboard"},{n:"Requests",t:"list"},{n:"Request",t:"detail"},{n:"New request",t:"form"},{n:"Equipment 360",t:"detail"},{n:"Rates",t:"detail"}],
+   apis:[{n:"Fusion REST",e:"projects, customers",s:"Connected",c:"ok"},{n:"OIC",e:"transfer orders",s:"Connected",c:"ok"},{n:"Fusion PPM",e:"post costs",s:"Connected",c:"ok"},{n:"BI Publisher",e:"browse lists",s:"Connected",c:"ok"}],
+ },
+ ft:{docs:[{k:"RD",n:"Idea one‑pager",m:"draft"}],features:["(to be scoped)"],entities:[],pages:[],apis:[]},
+ inv:{
+   docs:[{k:"FDD",n:"InvoicePro FDD",m:"v2.0 · 3w ago"},{k:"TDD",n:"Billing engine design",m:"2w ago"}],
+   features:["Invoice generation","Approval workflow","Dunning reminders","OIC billing sync"],
+   entities:[{n:"Invoice",f:11},{n:"InvoiceLine",f:7},{n:"Customer",f:9}],
+   pages:[{n:"Invoices",t:"list"},{n:"Invoice",t:"detail"},{n:"Run billing",t:"form"}],
+   apis:[{n:"OIC",e:"billing sync",s:"Warning",c:"warn"},{n:"Fusion AR",e:"post invoices",s:"Connected",c:"ok"}],
+ },
+};
+const ideas=[
+ {t:"Customer self‑service portal",v:"High",e:"M",s:8,st:"Evaluating",c:"warn"},
+ {t:"AI rate suggestions",v:"High",e:"M",s:7,st:"New",c:"na"},
+ {t:"Offline‑first mobile sync",v:"Med",e:"L",s:6,st:"Accepted",c:"ok"},
+ {t:"Legacy report retirement",v:"Low",e:"S",s:2,st:"Rejected",c:"crit"},
+];
+const releases=[
+ {p:"EquipRite",v:"2026.1 (web 1.3.0)",d:"Aug 2026",tr:"26C",st:"In progress",stc:"warn",r:88},
+ {p:"InvoicePro",v:"v2.0.0",d:"Nov 2026",tr:"26D",st:"In progress",stc:"crit",r:54},
+ {p:"Control Tower",v:"v0.1.0",d:"Dec 2026",tr:"26D",st:"Planned",stc:"na",r:72},
+ {p:"EquipRite",v:"2025.4 (web 1.2.4)",d:"Nov 2025",tr:"25D",st:"Released",stc:"ok",r:100},
+];
+const gates=[
+ {t:"Tests green",d:"CI run #482 · 0 failures",src:"GitHub Actions",s:"ok",i:"✓"},
+ {t:"Acceptance criteria present",d:"3 of 41 stories missing criteria",src:"Jira",s:"warn",i:"!"},
+ {t:"CHANGELOG updated",d:"Entry for 2026.1 added",src:"Repo",s:"ok",i:"✓"},
+ {t:"Version bumped",d:"web 1.2.4 → 1.3.0",src:"Manifest",s:"ok",i:"✓"},
+ {t:"Deployed to Test",d:"1.3.0 on Test pod · 1d ago",src:"VB Studio",s:"ok",i:"✓"},
+ {t:"No open blockers",d:"0 blocker bugs",src:"Jira",s:"ok",i:"✓"},
+];
+const verMatrix=[
+ {p:"Control Tower",web:{v:"0.1.0"},mob:null,desk:null,intg:null,suite:"—"},
+ {p:"EquipRite",web:{v:"1.3.0",prod:"1.2.4"},mob:{v:"1.1",prod:"1.1"},desk:{v:"0.4.0",prod:"0.3.1"},intg:{v:"OIC 3.2"},suite:"2026.1"},
+ {p:"FleetTrack",web:null,mob:null,desk:null,intg:null,suite:"—"},
+ {p:"InvoicePro",web:{v:"2.0.0‑rc1",prod:"1.4.2"},mob:null,desk:null,intg:{v:"2.0.0",prod:"1.4.0"},suite:"v2.0"},
+];
+const train=[
+ {q:"26A",w:"Feb 2026",rels:[{t:"EquipRite 2025.4 hotfix",c:"done"}]},
+ {q:"26B",w:"May 2026",rels:[]},
+ {q:"26C",w:"Aug 2026",rels:[{t:"EquipRite 2026.1",c:""}],now:true},
+ {q:"26D",w:"Nov 2026",rels:[{t:"InvoicePro v2.0",c:""},{t:"Control Tower v0.1",c:"plan"}]},
+ {q:"27A",w:"Feb 2027",rels:[{t:"FleetTrack MVP",c:"plan"}]},
+];
+const integrations=[
+ {g:"⿻",n:"GitHub",st:"Connected · last sync 5m ago",dot:"ok",d:"4 repos · PRs, Actions, tags, releases"},
+ {g:"📋",n:"Jira",st:"Connected · last sync 12m ago",dot:"ok",d:"Projects EQP, INV · stories, sprints, fixVersions"},
+ {g:"🏗",n:"VB Studio",st:"Not connected",dot:"na",d:"Builds & deployments to VBCS instances"},
+ {g:"🔗",n:"OIC",st:"Not connected",dot:"na",d:"Integration run status (optional)"},
+];
+
+const customers=[
+ {id:"acme",name:"Acme Rentals",type:"External",ver:"1.2.4",rel:"2025.4",env:"Prod",since:"Jun 2025",base:18,custom:1,reqs:3,h:"ok"},
+ {id:"globex",name:"Globex Plant Hire",type:"External",ver:"1.3.0",rel:"2026.1",env:"Prod",since:"Aug 2026",base:22,custom:2,reqs:5,h:"ok"},
+ {id:"initech",name:"Initech (Internal)",type:"Internal",ver:"1.3.0",rel:"2026.1",env:"Prod",since:"Aug 2026",base:22,custom:1,reqs:1,h:"warn"},
+ {id:"umbrella",name:"Umbrella Equip",type:"External",ver:"1.2.4",rel:"2025.4",env:"Test",since:"Oct 2026",base:18,custom:1,reqs:2,h:"ok"},
+];
+const featuresCat=[
+ {n:"My requests",m:"Requests",t:"core",rel:"2024.1",cust:["acme","globex","initech","umbrella"]},
+ {n:"Approve & allocate",m:"Approvals",t:"core",rel:"2024.1",cust:["acme","globex","initech","umbrella"]},
+ {n:"Pick & ship",m:"Fulfilment",t:"core",rel:"2024.2",cust:["acme","globex","initech","umbrella"]},
+ {n:"Rates & compare",m:"Billing",t:"core",rel:"2025.1",cust:["acme","globex","initech","umbrella"]},
+ {n:"Availability yard grid",m:"Equipment",t:"core",rel:"2025.4",cust:["globex","initech"]},
+ {n:"Multi-currency billing",m:"Billing",t:"candidate",rel:"2026.2 (planned)",cust:["globex","umbrella"]},
+ {n:"SSO with Azure AD",m:"Security",t:"candidate",rel:"backlog",cust:["initech"]},
+ {n:"Custom BI dashboard",m:"Reporting",t:"customer",rel:"custom",cust:["acme"]},
+ {n:"SMS delivery alerts",m:"Notifications",t:"customer",rel:"custom",cust:["globex"]},
+];
+const requests=[
+ {c:"globex",t:"SMS alerts on delivery",k:"New feature",s:"Delivered",d:"Customer-specific",r:"custom patch"},
+ {c:"acme",t:"Custom BI dashboard",k:"Enhancement",s:"In build",d:"Customer-specific",r:"—"},
+ {c:"globex",t:"Multi-currency billing",k:"New feature",s:"Approved",d:"Promote to core",r:"2026.2"},
+ {c:"umbrella",t:"Multi-currency billing",k:"New feature",s:"Requested",d:"Under decision",r:"—"},
+ {c:"acme",t:"Bulk return scan",k:"Modification",s:"Under review",d:"Under decision",r:"—"},
+ {c:"initech",t:"SSO with Azure AD",k:"Enhancement",s:"Requested",d:"Promote to core",r:"—"},
+];
+const pipelines=[
+ {prod:"EquipRite",name:"web-ci (Next)",engine:"GitHub Actions",last:"passed",dur:"4m 12s",when:"2h ago",by:"push"},
+ {prod:"EquipRite",name:"deploy-test",engine:"VB Studio",last:"passed",dur:"6m 02s",when:"1d ago",by:"manual"},
+ {prod:"InvoicePro",name:"web-ci",engine:"GitHub Actions",last:"failed",dur:"3m 48s",when:"5h ago",by:"PR #212"},
+ {prod:"Control Tower",name:"lint + validate",engine:"GitHub Actions",last:"passed",dur:"1m 30s",when:"today",by:"push"},
+ {prod:"InvoicePro",name:"deploy-test",engine:"VB Studio",last:"running",dur:"—",when:"now",by:"manual"},
+];
+const rColor=p=>p==null?"var(--muted)":p>=80?"var(--good)":p>=60?"var(--warn)":"var(--crit)";
+const el=(h)=>{const t=document.createElement("template");t.innerHTML=h.trim();return t.content.firstChild};
+
+// Portfolio cards
+const grid=document.getElementById("prodGrid");
+products.forEach(p=>{
+  const rv=p.readiness==null?"—":p.readiness+"%";
+  const card=el(`<button class="pcard" data-id="${p.id}">
+    <div class="top"><div><h3>${p.name}</h3><div class="tag">${p.tag}</div></div>
+      <div class="ring" style="--p:${p.readiness||0};--c:${rColor(p.readiness)}"><i>${rv}</i></div></div>
+    <div class="rbar"><i style="width:${p.readiness||0}%;background:${rColor(p.readiness)}"></i></div>
+    <div class="meta"><span class="chip phase">${p.phase}</span><span>${p.rel}</span></div>
+    <div class="meta"><span>${p.risks?("⚠ "+p.risks+" risk"+(p.risks>1?"s":"")):"✓ no risks"}</span><span>Details →</span></div>
+  </button>`);
+  card.addEventListener("click",()=>openProduct(p.id));
+  grid.appendChild(card);
+});
+
+function renderSpec(p,tabsId,bodyId){
+  const s=spec[p.id]||{}; const body=document.getElementById(bodyId||"specBody"); const tabs=document.getElementById(tabsId||"specTabs");
+  const bc=c=>({ok:"ok",warn:"warn",na:"na"}[c]||"na");
+  function draw(t){
+    tabs.querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.t===t));
+    let h="";
+    if(t==="docs"){const d=s.docs||[]; h=d.length?'<div class="doclist">'+d.map(x=>`<div class="docrow"><div class="dt">${x.k}</div><div><b>${x.n}</b><div class="meta2">${x.m}</div></div><span class="open">Open ↗</span></div>`).join("")+'</div>':'<div class="specempty">No design docs linked yet — add the RD/FDD, or let Blueprint Studio generate them.</div>';}
+    else if(t==="features"){const f=s.features||[]; h=f.length?'<div class="speclist">'+f.map(x=>`<div class="specitem"><span class="k">${x}</span></div>`).join("")+'</div>':'<div class="specempty">No features captured yet.</div>';}
+    else if(t==="data"){const e=s.entities||[]; h=e.length?'<div class="speclist">'+e.map(x=>`<div class="specitem"><span class="k">${x.n}</span><span class="muted">${x.f} fields</span><span class="chip pill">Business Object</span></div>`).join("")+'</div>':'<div class="specempty">No data objects yet — generated from the FDD by Blueprint Studio.</div>';}
+    else if(t==="pages"){const pg=s.pages||[]; h=pg.length?'<div class="speclist">'+pg.map(x=>`<div class="specitem"><span class="k">${x.n}</span><span class="muted">${x.t}</span></div>`).join("")+'</div>':'<div class="specempty">No pages yet.</div>';}
+    else {const a=s.apis||[]; h=a.length?'<div class="speclist">'+a.map(x=>`<div class="specitem"><span class="k">${x.n}</span><span class="muted">${x.e}</span><span class="badge ${bc(x.c)} pill">${x.s}</span></div>`).join("")+'</div>':'<div class="specempty">No APIs/integrations yet.</div>';}
+    body.innerHTML=h;
+  }
+  tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>draw(b.dataset.t));
+  draw("docs");
+}
+function openProduct(id){
+  const p=products.find(x=>x.id===id);
+  document.getElementById("p360name").textContent=p.name;
+  document.getElementById("p360tag").textContent=p.tag+" · "+p.repo;
+  const cur=PHASES.indexOf(p.phase);
+  document.getElementById("p360steps").innerHTML=PHASES.map((ph,i)=>
+    `<div class="step ${i<cur?"done":i===cur?"now":""}"><small>${i<cur?"Done":i===cur?"Now":"Next"}</small>${ph}</div>`).join("");
+  document.getElementById("p360comp").innerHTML=p.comp.length?p.comp.map(c=>
+    `<tr><td><b>${c.n}</b></td><td>${c.t}</td><td class="mono">${c.v}</td><td class="mono">${c.live}</td></tr>`).join(""):`<tr><td colspan="4" style="color:var(--muted)">No components yet — still in ${p.phase.toLowerCase()}.</td></tr>`;
+  document.getElementById("p360env").innerHTML=p.env.length?p.env.map(e=>
+    `<tr><td><b>${e.n}</b></td><td class="mono">${e.v}</td><td>${e.w}</td><td><span class="badge ${e.h}">${e.h==="ok"?"Healthy":e.h==="warn"?"Warning":"—"}</span></td></tr>`).join(""):`<tr><td colspan="4" style="color:var(--muted)">No environments provisioned.</td></tr>`;
+  document.getElementById("p360ring").style.setProperty("--p",p.readiness||0);
+  document.getElementById("p360ring").style.setProperty("--c",rColor(p.readiness));
+  document.getElementById("p360ringv").textContent=p.readiness==null?"—":p.readiness+"%";
+  document.getElementById("p360rel").textContent=p.rel;
+  document.getElementById("p360reltxt").textContent=p.reltxt;
+  document.getElementById("p360sprint").textContent=p.sprint;
+  document.getElementById("p360repo").textContent=p.repo;
+  renderSpec(p);
+  show("product",false);
+}
+document.getElementById("backToPortfolio").addEventListener("click",()=>go("portfolio"));
+
+// Ideas
+document.getElementById("ideaRows").innerHTML=ideas.map(i=>
+ `<tr><td><b>${i.t}</b></td><td>${i.v}</td><td>${i.e}</td><td class="mono">${i.s}</td><td><span class="badge ${i.c}">${i.st}</span></td></tr>`).join("");
+
+// Board
+document.getElementById("board").innerHTML=PHASES.map(ph=>{
+  const inPh=products.filter(p=>p.phase===ph);
+  return `<div class="col"><h4>${ph}<span>${inPh.length}</span></h4>${inPh.map(p=>
+    `<div class="bcard" data-id="${p.id}"><b>${p.name}</b><div class="m">${p.rel}</div></div>`).join("")||'<div class="m" style="color:var(--muted);font-size:.74rem;padding:4px">—</div>'}</div>`;
+}).join("");
+document.querySelectorAll("#board .bcard").forEach(c=>c.addEventListener("click",()=>openProduct(c.dataset.id)));
+
+// Releases
+document.getElementById("relRows").innerHTML=releases.map(r=>
+ `<tr><td><b>${r.p}</b></td><td class="mono">${r.v}</td><td>${r.d}</td><td><span class="chip">${r.tr}</span></td>
+   <td><span class="badge ${r.stc}">${r.st}</span></td>
+   <td><div style="display:flex;align-items:center;gap:8px"><div class="rbar" style="width:70px"><i style="width:${r.r}%;background:${rColor(r.r)}"></i></div><span class="mono">${r.r}%</span></div></td></tr>`).join("");
+
+// Gates
+document.getElementById("gates").innerHTML=gates.map(g=>
+ `<div class="gate"><div class="gi ${g.s}">${g.i}</div><div><div class="gt">${g.t}</div><div class="gd">${g.d}</div></div><div class="src">${g.src}</div></div>`).join("");
+
+// Versions
+const cell=c=>{ if(!c)return '<span style="color:var(--muted)">—</span>';
+  let s=`<span class="mono">${c.v}</span>`; if(c.prod)s+=` <span title="live in prod" style="color:var(--good)">●${c.prod}</span>`; return s; };
+document.getElementById("verRows").innerHTML=verMatrix.map(r=>
+ `<tr><td><b>${r.p}</b></td><td>${cell(r.web)}</td><td>${cell(r.mob)}</td><td>${cell(r.desk)}</td><td>${cell(r.intg)}</td><td><span class="chip">${r.suite}</span></td></tr>`).join("");
+
+// Calendar
+document.getElementById("train").innerHTML=train.map(q=>
+ `<div class="q ${q.now?"now":""}"><h4>${q.q}${q.now?' <span class="chip phase" style="font-size:.6rem">now</span>':""}</h4><div class="when">${q.w}</div>
+   ${q.rels.map(r=>`<div class="rel ${r.c}">${r.t}</div>`).join("")||'<div class="when">no releases</div>'}</div>`).join("");
+
+// Integrations
+document.getElementById("ints").innerHTML=integrations.map(i=>
+ `<div class="int"><div class="h"><div class="g">${i.g}</div><div><b>${i.n}</b><div class="st"><span class="dot ${i.dot}"></span> ${i.st}</div></div></div>
+   <p class="st" style="margin:0 0 12px">${i.d}</p><button class="btn ${i.dot==="ok"?"ghost":""} sm">${i.dot==="ok"?"Sync now":"Connect"}</button></div>`).join("");
+
+// Design & Spec screen (top-level)
+let specSel="ct";
+const specProds=document.getElementById("specProds");
+specProds.innerHTML=products.map(p=>`<button class="chip" data-id="${p.id}" style="cursor:pointer">${p.name}</button>`).join("");
+function selSpec(id){specSel=id;specProds.querySelectorAll("button").forEach(b=>b.classList.toggle("phase",b.dataset.id===id));renderSpec(products.find(p=>p.id===id),"specTabs2","specBody2");}
+specProds.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>selSpec(b.dataset.id)));
+selSpec("ct");
+
+// Customers, features, enhancements, compare releases
+const custName=id=>(customers.find(c=>c.id===id)||{}).name||id;
+const sColor=s=>s==="Delivered"?"ok":(s==="In build"||s==="Approved")?"warn":"na";
+function dChip(d){const cls=d==="Promote to core"?"chip phase":d==="Customer-specific"?"chip":"badge warn";return `<span class="${cls}">${d}</span>`;}
+
+document.getElementById("custRows").innerHTML=customers.map(c=>
+ `<tr data-id="${c.id}" style="cursor:pointer"><td><b>${c.name}</b></td><td>${c.type}</td><td class="mono">${c.ver}</td><td><span class="chip">${c.rel}</span></td><td><span class="badge ${c.env==='Prod'?'ok':'warn'}">${c.env}</span></td><td class="mono">${c.base}</td><td class="mono">${c.custom}</td><td>${c.reqs}</td></tr>`).join("");
+document.querySelectorAll("#custRows tr").forEach(r=>r.addEventListener("click",()=>openCustomer(r.dataset.id)));
+
+function openCustomer(id){
+  const c=customers.find(x=>x.id===id);
+  document.getElementById("c360name").textContent=c.name;
+  document.getElementById("c360tag").textContent=c.type+" customer · live since "+c.since;
+  document.getElementById("c360deploy").innerHTML=`<div class="speclist"><div class="specitem"><span class="k">Version</span><span class="mono pill">${c.ver}</span></div><div class="specitem"><span class="k">Release</span><span class="chip pill">${c.rel}</span></div><div class="specitem"><span class="k">Environment</span><span class="badge ${c.env==='Prod'?'ok':'warn'} pill">${c.env}</span></div><div class="specitem"><span class="k">Live since</span><span class="muted pill">${c.since}</span></div></div>`;
+  const feats=featuresCat.filter(f=>f.cust.includes(id));
+  const base=feats.filter(f=>f.t!=="customer"), cust=feats.filter(f=>f.t==="customer");
+  document.getElementById("c360features").innerHTML=`<div class="hint" style="margin-bottom:6px">Base &amp; core (${base.length})</div><div class="speclist">`+base.map(f=>`<div class="specitem"><span class="k">${f.n}</span><span class="muted">${f.m}</span>${f.t==="candidate"?'<span class="chip phase pill">core candidate</span>':'<span class="badge ok pill">core</span>'}</div>`).join("")+`</div><div class="hint" style="margin:14px 0 6px">Customer-specific (${cust.length})</div>`+(cust.length?`<div class="speclist">`+cust.map(f=>`<div class="specitem"><span class="k">${f.n}</span><span class="muted">${f.m}</span><span class="chip pill">custom</span></div>`).join("")+`</div>`:`<div class="specempty">None — runs the base product.</div>`);
+  const rq=requests.filter(r=>r.c===id);
+  document.getElementById("c360reqs").innerHTML=rq.length?`<div class="speclist">`+rq.map(r=>`<div class="specitem" style="flex-wrap:wrap"><span class="k">${r.t}</span><span class="badge ${sColor(r.s)} pill">${r.s}</span><div style="flex-basis:100%;margin-top:5px"><span class="muted">${r.k} · </span>${dChip(r.d)}</div></div>`).join("")+`</div>`:`<div class="specempty">No requests yet.</div>`;
+  show("customer",false);
+}
+document.getElementById("backToCustomers").addEventListener("click",()=>go("customers"));
+
+const custCols=["acme","globex","initech","umbrella"];
+const tChip=t=>t==="core"?'<span class="badge ok">core</span>':t==="customer"?'<span class="chip">custom</span>':'<span class="chip phase">candidate</span>';
+document.getElementById("featRows").innerHTML=featuresCat.map(f=>{
+  const dots=custCols.map(cid=>`<td style="text-align:center">${f.cust.includes(cid)?'<span class="dot ok"></span>':'<span class="dot na"></span>'}</td>`).join("");
+  const dem=f.cust.length;
+  return `<tr><td><b>${f.n}</b><div style="font-size:.74rem;color:var(--muted)">${f.m}</div></td><td>${tChip(f.t)}</td><td class="mono">${f.rel}</td>${dots}<td><div style="display:flex;align-items:center;gap:6px"><div class="rbar" style="width:46px"><i style="width:${dem/4*100}%;background:var(--accent)"></i></div><span class="mono">${dem}/4</span></div></td></tr>`;
+}).join("");
+
+document.getElementById("reqRows").innerHTML=requests.map(r=>
+ `<tr><td><b>${custName(r.c)}</b></td><td>${r.t}</td><td>${r.k}</td><td><span class="badge ${sColor(r.s)}">${r.s}</span></td><td>${dChip(r.d)}</td><td class="mono">${r.r}</td></tr>`).join("");
+
+const cmp={add:["Availability yard grid (Equipment)","Pick confirm dialog (Fulfilment)","Jira stories + Record & trace","SQL worksheet + Ask AI"],chg:["Rates: Threshold / Period total / Rate-per-day columns","New request: 3-step layout","Picking: request opens in a dialog"],rem:["Legacy status report (deprecated)"]};
+const cmpList=a=>a.length?`<div class="speclist">`+a.map(x=>`<div class="specitem"><span class="k">${x}</span></div>`).join("")+`</div>`:`<div class="specempty">None.</div>`;
+document.getElementById("cmpAdd").innerHTML=cmpList(cmp.add);
+document.getElementById("cmpChg").innerHTML=cmpList(cmp.chg);
+document.getElementById("cmpRem").innerHTML=cmpList(cmp.rem);
+
+// CI/CD pipelines
+const ciColor=s=>s==="passed"?"ok":s==="failed"?"crit":"warn";
+document.getElementById("cicdRows").innerHTML=pipelines.map(p=>
+ `<tr><td><b>${p.prod}</b></td><td>${p.name}</td><td><span class="chip">${p.engine}</span></td><td><span class="badge ${ciColor(p.last)}">${p.last}</span></td><td class="mono">${p.dur}</td><td>${p.when}</td><td>${p.by}</td><td><button class="btn sm ghost">Run ▸</button></td></tr>`).join("");
+
+// Navigation
+const views=["portfolio","ideas","board","specs","releases","compare","cicd","readiness","versions","calendar","customers","customer","features","enhancements","integrations","admin","product"];
+function show(name,setHash=true){
+  views.forEach(v=>{const n=document.getElementById("view-"+v);if(n)n.hidden=(v!==name);});
+  document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("active",a.dataset.view===name));
+  document.getElementById("app").classList.remove("open");
+  window.scrollTo(0,0);
+  if(setHash){try{location.hash=name;}catch(e){}}
+}
+function go(name){show(name,true);}
+document.querySelectorAll("#nav a").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();go(a.dataset.view);}));
+window.addEventListener("hashchange",()=>{const h=(location.hash||"").replace("#","");if(views.includes(h))show(h,false);});
+
+// Mobile menu + theme
+const app=document.getElementById("app");
+document.getElementById("hamb").addEventListener("click",()=>app.classList.toggle("open"));
+document.getElementById("scrim").addEventListener("click",()=>app.classList.remove("open"));
+const root=document.documentElement;
+function sysDark(){return window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches;}
+let theme=null; try{theme=localStorage.getItem("ct-theme");}catch(e){}
+if(theme)root.setAttribute("data-theme",theme);
+document.getElementById("theme").addEventListener("click",()=>{
+  const cur=root.getAttribute("data-theme")||(sysDark()?"dark":"light");
+  const next=cur==="dark"?"light":"dark"; root.setAttribute("data-theme",next);
+  try{localStorage.setItem("ct-theme",next);}catch(e){}
+});
+
+// initial route
+const start=(location.hash||"").replace("#","");
+show(views.includes(start)?start:"portfolio",false);
+</script>

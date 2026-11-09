@@ -1,0 +1,45 @@
+name: CI
+
+# Runs on every push and PR. Today it checks the repo foundation and the
+# prototype; once the VBCS app and its tests exist, add build + test steps here
+# (this is Control Tower's own "tests green" quality gate).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify required files exist
+        run: |
+          set -e
+          for f in README.md CHANGELOG.md VERSIONS.md ROADMAP.md \
+                   docs/00-requirements-RD.md docs/01-functional-FDD.md \
+                   docs/02-technical-TDD.md docs/prototype/index.html; do
+            test -f "$f" && echo "ok: $f" || { echo "MISSING: $f"; exit 1; }
+          done
+
+      - name: Prototype sanity check (has a title and no obvious truncation)
+        run: |
+          set -e
+          grep -q "<title>Control Tower</title>" docs/prototype/index.html
+          # balanced <section> open/close count
+          open=$(grep -o "<section" docs/prototype/index.html | wc -l)
+          close=$(grep -o "</section>" docs/prototype/index.html | wc -l)
+          echo "sections: open=$open close=$close"
+          test "$open" = "$close"
+
+  # app-tests:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with: { node-version: 20 }
+  #     - run: npm ci
+  #     - run: npm test        # unit + the VBCS binding-rule validator
