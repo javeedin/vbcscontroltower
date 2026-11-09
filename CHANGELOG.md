@@ -20,6 +20,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning foll
 
 - **Phase 1.4 — EquipRite Next "Redwood" shell:** matched EquipRite's Redwood look — top **multi‑tab** navigation with an active‑tab underline, the **teal page‑header banner** (`rgb(44,82,102)`) with Oracle's colour strip, **Oracle Sans**, and EquipRite's exact Redwood tokens (page `rgb(245,244,242)`, ink `rgb(22,21,19)`, accent `rgb(0,104,140)`, 6px radii). Replaces the left‑sidebar shell; oj‑table / oj‑dialog still render via the JET Redwood theme. Verified with Playwright (tabs navigate, banner updates per screen, data from DuckDB, 0 console errors).
 
+- **Phase 1.5 — collapsible side nav:** the menu moved from a (overflowing) top tab row into a **left navigation panel** that collapses to an icon‑only rail via a ☰ toggle in the top bar; the collapsed state is remembered (localStorage). Verified with Playwright (244px ⇄ 56px, labels hide, navigation works while collapsed, 0 errors).
+
 ### Next
 - Convert the remaining card/diagram screens (Product 360, Lifecycle Board, Calendar, Release Readiness, Compare releases) to native JET views; generate VBCS artifacts from a saved spec; add live GitHub / Jira / VB Studio sync; then realize the app in VBCS. See `ROADMAP.md`.
 

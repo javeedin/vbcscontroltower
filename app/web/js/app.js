@@ -61,6 +61,11 @@ require([
     self.bannerTitle = ko.observable('Portfolio');
     self.bannerSub = ko.observable('');
     self.go = function (id) { self.selectedView(id); self.loadScreen(id); };
+    self.navCollapsed = ko.observable(false);
+    self.toggleNav = function () {
+      self.navCollapsed(!self.navCollapsed());
+      try { localStorage.setItem('ct-nav-collapsed', self.navCollapsed() ? '1' : '0'); } catch (e) {}
+    };
 
     self.currentType = ko.observable('cards');
     self.title = ko.observable(''); self.sub = ko.observable('');
@@ -232,6 +237,7 @@ require([
 
   Bootstrap.whenDocumentReady().then(function () {
     const vm = new VM();
+    try { vm.navCollapsed(localStorage.getItem('ct-nav-collapsed') === '1'); } catch (e) {}
     ko.applyBindings(vm, document.getElementById('globalBody'));
     ko.applyBindings(vm, document.getElementById('addDlg'));
     ko.applyBindings(vm, document.getElementById('aiDlg'));
