@@ -60,7 +60,15 @@ npm run serve        # → http://localhost:3000
 
 This is the **local dev harness** — the full Control Tower UI with embedded sample data, so you can click through every screen. It's the development emulation; the production app is realized and deployed in **VBCS** (Business Objects + Service Connections + JET pages). Wiring the UI to a mock Business‑Object REST layer is the next increment (see `ROADMAP.md`).
 
-> Prefer no install? Open `docs/prototype/index.html` directly in a browser for the same UI.
+**Desktop app (Electron):**
+
+```bash
+npm run desktop:fresh      # installs Electron on first run, then opens the app window
+```
+
+The app uses **Oracle's official Redwood theme** (loaded from Oracle's CDN), so it needs internet. Electron lives in `desktop/`, so a web‑only `npm install` isn't affected by it.
+
+> Prefer no install? Open `docs/prototype/index.html` directly in a browser for the same UI (the early mockup; the real app is under `app/web/`).
 
 ## How it's built
 

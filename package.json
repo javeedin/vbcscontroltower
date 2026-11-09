@@ -5,7 +5,9 @@
   "description": "Control Tower — development lifecycle cockpit (local dev harness for the VBCS app)",
   "scripts": {
     "serve": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "desktop": "cd desktop && npm start",
+    "desktop:fresh": "cd desktop && npm install && npm start"
   },
   "engines": {
     "node": ">=18"

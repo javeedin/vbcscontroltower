@@ -1,0 +1,13 @@
+{
+  "name": "vbcs-control-tower-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Control Tower desktop app (Electron wrapper around the dev server)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^31.7.7"
+  }
+}
