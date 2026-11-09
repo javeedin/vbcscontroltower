@@ -1,0 +1,13 @@
+{
+  "name": "vbcs-control-tower",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Control Tower — development lifecycle cockpit (local dev harness for the VBCS app)",
+  "scripts": {
+    "serve": "node server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

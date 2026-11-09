@@ -10,9 +10,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning foll
 - Full design set under `docs/`: Requirements (RD), Functional Design (FDD), Technical Design (TDD), and the Customers & Governance addendum.
 - Clickable prototype (`docs/prototype/index.html`) and rendered process flows (`docs/prototype/flows.html`).
 - `app/` scaffold with the Business‑Object data model (blueprint).
+- **Phase 1 — runnable local dev build:** zero‑dependency Node harness (`server.js`, `npm run serve`) serving the full Control Tower UI at `app/web/` — portfolio, product 360, releases, compare, CI/CD, readiness, version matrix, calendar, customers, features & demand, enhancements, design & spec, admin — with sample data. Verified rendering end‑to‑end (0 console errors).
 
 ### Next
-- VBCS app skeleton: shell + Portfolio dashboard (MVP), then Product 360 and Releases. See `ROADMAP.md`.
+- Wire the UI to a mock Business‑Object REST layer (served by the harness), then to live VB Studio / GitHub / Jira; then realize screens as VBCS/JET for deploy. See `ROADMAP.md`.
 
 ---
 

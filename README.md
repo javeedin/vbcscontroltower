@@ -2,7 +2,7 @@
 
 **A VBCS application that manages the complete software development lifecycle — from the first idea to shipped releases — across every product you build, with per‑customer deployment tracking, feature governance, and an AI FDD‑to‑app builder.**
 
-> Status: **design + prototype** complete; VBCS implementation starting. See [`ROADMAP.md`](ROADMAP.md).
+> Status: **Phase 1 — runnable dev build** (full UI + sample data). VBCS realization next. See [`ROADMAP.md`](ROADMAP.md).
 
 ---
 
@@ -36,17 +36,31 @@ No single product covers the full SDLC *plus* the ISV multi‑customer / feature
 │   └── prototype/
 │       ├── index.html                Clickable prototype (open in a browser)
 │       └── flows.html                Rendered process-flow diagrams
-├── app/                          The VBCS application (being built)
-│   ├── README.md                     App structure & build approach
+├── server.js                     Local dev harness (zero-dependency static server)
+├── package.json                  npm scripts: serve / start
+├── app/                          The VBCS application
+│   ├── web/                          the running app (shell + all screens, sample data)
+│   ├── README.md                     app structure & build approach
 │   └── data-model/                   Business Object definitions (the blueprint)
 ├── CHANGELOG.md                  What changed per version
 ├── VERSIONS.md                   Component version registry
 └── ROADMAP.md                    Build sequence & open decisions
 ```
 
-## See it now
+## Run it locally
 
-Open **`docs/prototype/index.html`** in a browser to click through the whole UX (portfolio, product 360, releases, compare, CI/CD, customers, features & demand, enhancements) with sample data. It's a mockup, not the VBCS app — but it shows exactly what we're building.
+The app runs as a local dev build (Node, zero dependencies):
+
+```bash
+git clone https://github.com/javeedin/vbcscontroltower.git
+cd vbcscontroltower
+npm install
+npm run serve        # → http://localhost:3000
+```
+
+This is the **local dev harness** — the full Control Tower UI with embedded sample data, so you can click through every screen. It's the development emulation; the production app is realized and deployed in **VBCS** (Business Objects + Service Connections + JET pages). Wiring the UI to a mock Business‑Object REST layer is the next increment (see `ROADMAP.md`).
+
+> Prefer no install? Open `docs/prototype/index.html` directly in a browser for the same UI.
 
 ## How it's built
 
