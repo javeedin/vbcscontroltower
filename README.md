@@ -2,7 +2,11 @@
 
 **A VBCS application that manages the complete software development lifecycle — from the first idea to shipped releases — across every product you build, with per‑customer deployment tracking, feature governance, and an AI FDD‑to‑app builder.**
 
-> Status: **Phase 1.2 — real Oracle JET UI + DuckDB backend** (full CRUD, persisted locally). VBCS realization next. See [`ROADMAP.md`](ROADMAP.md).
+> Status: **Phase 1.3 — AI FDD Interpreter** on real Oracle JET + DuckDB (full CRUD + document‑to‑spec, persisted locally). VBCS realization next. See [`ROADMAP.md`](ROADMAP.md).
+
+## AI setup (Design & Spec)
+
+Click **🤖 AI: setup** in the toolbar, pick a provider (**Claude** / OpenAI / Gemini / OpenAI‑compatible / OCI) and paste your API key. The key is stored **server‑side** in `app/data/.secrets.json` (gitignored) and the server makes the LLM calls — it never reaches the browser or git. Then on **Design & Spec**, upload or paste a requirements / FDD document and **Analyze**: the AI extracts features, pages, flows, validations, conditions and entities into a **versioned spec saved in DuckDB**. Without a key it falls back to a built‑in heuristic extractor so the flow still works.
 
 ---
 

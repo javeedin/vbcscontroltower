@@ -14,6 +14,7 @@
     <div class="brand"><div class="brand-logo">CT</div><div><b>Control&nbsp;Tower</b><span>Lifecycle cockpit · DuckDB</span></div></div>
     <div class="header-spacer"></div>
     <div class="sync"><span class="d"></span>Local DuckDB</div>
+    <oj-button chroming="borderless" on-oj-action="[[openAiSettings]]" title="AI setup"><span data-bind="text: aiBtnText"></span></oj-button>
     <div class="avatar" title="You">KN</div>
   </header>
 
@@ -54,6 +55,45 @@
         <oj-table id="grid" aria-label="Records" data="[[tableDP]]" columns="[[tableColumns]]"></oj-table>
       </div>
 
+      <!-- DESIGN & SPEC — AI interpreter -->
+      <div data-bind="visible: currentType()==='builder'">
+        <div class="screen-head"><div><h1 class="oj-typography-heading-lg">Design &amp; Spec — AI Interpreter</h1><div class="screen-sub">Upload or paste a requirements / FDD document. AI reads it and extracts features, pages, flows, validations &amp; conditions into a versioned spec, stored in DuckDB.</div></div></div>
+        <div class="panel">
+          <div class="dlg-field"><label>Product / idea</label><input data-bind="value: biTarget" placeholder="e.g. FleetTrack"></div>
+          <div class="dlg-field"><label>Document (.txt / .md) — or paste below</label><input type="file" id="biFile" accept=".txt,.md,.markdown,text/plain"></div>
+          <div class="dlg-field"><label>Document text</label><textarea id="biText" rows="9" data-bind="value: biText" placeholder="Paste the requirements / FDD text here…"></textarea></div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <oj-button chroming="callToAction" on-oj-action="[[analyzeDoc]]">Analyze with AI</oj-button>
+            <span class="screen-sub" data-bind="text: biStatus"></span>
+          </div>
+        </div>
+
+        <div data-bind="visible: biResult">
+          <div class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+              <h2 style="margin:0" data-bind="text: biResultTitle"></h2>
+              <oj-button on-oj-action="[[saveSpec]]">Save as spec version</oj-button>
+            </div>
+            <div class="bi-grid">
+              <div class="bi-col"><h4>Features</h4><ul data-bind="foreach: biFeatures"><li data-bind="text: $data"></li></ul></div>
+              <div class="bi-col"><h4>Pages</h4><ul data-bind="foreach: biPages"><li data-bind="text: $data"></li></ul></div>
+              <div class="bi-col"><h4>Flows</h4><ul data-bind="foreach: biFlows"><li data-bind="text: $data"></li></ul></div>
+              <div class="bi-col"><h4>Validations</h4><ul data-bind="foreach: biValidations"><li data-bind="text: $data"></li></ul></div>
+              <div class="bi-col"><h4>Conditions</h4><ul data-bind="foreach: biConditions"><li data-bind="text: $data"></li></ul></div>
+              <div class="bi-col"><h4>Entities</h4><ul data-bind="foreach: biEntities"><li data-bind="text: $data"></li></ul></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2 style="margin:0 0 10px">Saved spec versions</h2>
+          <div data-bind="foreach: biVersions" class="speclist2">
+            <div class="specitem2"><b data-bind="text: label"></b><span class="screen-sub" data-bind="text: meta"></span></div>
+          </div>
+          <div class="screen-sub" data-bind="visible: biVersions().length===0">No spec versions yet — analyze a document and save it.</div>
+        </div>
+      </div>
+
       <!-- SOON -->
       <div data-bind="visible: currentType()==='soon'">
         <div class="screen-head"><div><h1 class="oj-typography-heading-lg" data-bind="text: title"></h1></div></div>
@@ -74,6 +114,29 @@
   <div slot="footer">
     <oj-button on-oj-action="[[closeAdd]]">Cancel</oj-button>
     <oj-button chroming="callToAction" on-oj-action="[[submitAdd]]">Save</oj-button>
+  </div>
+</oj-dialog>
+
+<!-- AI setup dialog -->
+<oj-dialog id="aiDlg" dialog-title="AI setup" cancel-behavior="icon" style="width:460px;max-width:94vw">
+  <div slot="body">
+    <div class="dlg-field"><label>LLM provider</label>
+      <select data-bind="value: aiProvider">
+        <option value="claude">Claude (Anthropic)</option>
+        <option value="openai">OpenAI</option>
+        <option value="gemini">Google Gemini</option>
+        <option value="compatible">OpenAI-compatible (base URL)</option>
+        <option value="oci">OCI GenAI (advanced)</option>
+      </select>
+    </div>
+    <div class="dlg-field"><label>API key</label><input type="password" data-bind="value: aiKey" placeholder="paste your key — stored locally, server-side, never committed"></div>
+    <div class="dlg-field"><label>Model (optional)</label><input data-bind="value: aiModel" placeholder="e.g. claude-3-5-sonnet-latest"></div>
+    <div class="dlg-field" data-bind="visible: aiProvider()==='compatible'"><label>Base URL</label><input data-bind="value: aiBaseUrl" placeholder="https://host/v1"></div>
+    <div class="screen-sub" data-bind="text: aiSaveStatus"></div>
+  </div>
+  <div slot="footer">
+    <oj-button on-oj-action="[[closeAiSettings]]">Cancel</oj-button>
+    <oj-button chroming="callToAction" on-oj-action="[[saveAiSettings]]">Save</oj-button>
   </div>
 </oj-dialog>
 

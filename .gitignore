@@ -31,6 +31,8 @@ yarn-error.log*
 *.pem
 credentials.json
 secrets.json
+.secrets.json
+app/data/.secrets.json
 
 # Editor / OS
 .vscode/

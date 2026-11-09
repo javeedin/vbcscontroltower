@@ -56,3 +56,20 @@ html, body { height: 100%; margin: 0; }
   border: 1px solid var(--oj-core-divider-color); border-radius: 6px; background: var(--oj-core-bg-color-content); color: var(--oj-core-text-color-primary); }
 
 @media (max-width: 820px) { .kpis { grid-template-columns: repeat(2, 1fr); } .app-nav { width: 200px; } }
+
+/* Design & Spec — AI interpreter */
+.panel { background: var(--oj-core-bg-color-content); border: 1px solid var(--oj-core-divider-color);
+  border-radius: var(--oj-panel-border-radius); padding: 18px; margin-bottom: 16px; }
+.panel h2 { font-size: 1.05rem; }
+textarea#biText { width: 100%; box-sizing: border-box; font: inherit; padding: 10px; resize: vertical;
+  border: 1px solid var(--oj-core-divider-color); border-radius: 6px; background: var(--oj-core-bg-color-content); color: var(--oj-core-text-color-primary); }
+.bi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.bi-col { border: 1px solid var(--oj-core-divider-color); border-radius: 8px; padding: 12px 14px; background: var(--oj-core-bg-color, #f7f6f4); }
+.bi-col h4 { margin: 0 0 8px; font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--oj-core-text-color-brand); }
+.bi-col ul { margin: 0; padding-left: 18px; } .bi-col li { font-size: .86rem; margin-bottom: 5px; }
+.bi-col:empty, .bi-col ul:empty { display: none; }
+.speclist2 { display: flex; flex-direction: column; gap: 8px; }
+.specitem2 { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border: 1px solid var(--oj-core-divider-color); border-radius: 8px; background: var(--oj-core-bg-color, #f7f6f4); }
+.dlg-field select { width: 100%; padding: 8px 10px; box-sizing: border-box; font: inherit;
+  border: 1px solid var(--oj-core-divider-color); border-radius: 6px; background: var(--oj-core-bg-color-content); color: var(--oj-core-text-color-primary); }

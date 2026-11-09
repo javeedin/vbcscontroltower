@@ -16,8 +16,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning foll
 
 - **Phase 1.2 — real Oracle JET UI + DuckDB backend:** the app is now built with genuine Oracle JET Redwood components (oj‑navigation‑list, oj‑table, oj‑button, oj‑dialog) from the Oracle JET CDN, and **every object type is a DuckDB table** (`@duckdb/node-api`, seeded from `app/data/seed.json`). Full CRUD — create via dialog, per‑row delete — persists to the local DuckDB file through a REST API (`/rest/:collection`). Verified end‑to‑end with Playwright (UI create persists; 0 console errors).
 
+- **Phase 1.3 — AI FDD Interpreter (Design & Spec):** a toolbar **AI setup** (Claude / OpenAI / Gemini / OpenAI‑compatible / OCI; API key stored server‑side in a gitignored file, LLM called from the server — never in the browser or git). On **Design & Spec**, upload or paste a requirements / FDD document and the AI extracts **features, pages, flows, validations, conditions, entities** into a **versioned spec saved in DuckDB** (`blueprints` table). Falls back to a heuristic extractor when no key is set. Verified end‑to‑end with Playwright (0 console errors).
+
 ### Next
-- Convert the remaining card/diagram screens (Product 360, Board, Calendar, Readiness, Compare, Design & Spec) to native JET views; add edit‑in‑place and live GitHub / Jira / VB Studio sync; then realize the screens as a deployable VBCS app. See `ROADMAP.md`.
+- Convert the remaining card/diagram screens (Product 360, Lifecycle Board, Calendar, Release Readiness, Compare releases) to native JET views; generate VBCS artifacts from a saved spec; add live GitHub / Jira / VB Studio sync; then realize the app in VBCS. See `ROADMAP.md`.
 
 ---
 

@@ -21,7 +21,7 @@ require([
       cols: [col('Idea', 'title'), col('Value', 'value'), col('Effort', 'effort'), col('Score', 'score'), col('Status', 'status')],
       add: { label: '+ New idea', fields: [['title', 'Idea'], ['value', 'Value (Low/Med/High)'], ['effort', 'Effort (S/M/L)'], ['score', 'Score'], ['status', 'Status']] } },
     { id: 'board', label: 'Lifecycle Board', icon: '🧭', type: 'soon' },
-    { id: 'specs', label: 'Design & Spec', icon: '📐', type: 'soon' },
+    { id: 'specs', label: 'Design & Spec', icon: '📐', type: 'builder' },
     { id: 'releases', label: 'Releases', icon: '🚀', type: 'table', coll: 'releases',
       cols: [col('Product', 'product'), col('Version', 'version'), col('Target', 'target'), col('Train', 'train'), col('State', 'state'), col('Readiness %', 'readiness')],
       add: { label: '+ New release', fields: [['product', 'Product'], ['version', 'Version'], ['target', 'Target date'], ['train', 'Train'], ['state', 'State'], ['readiness', 'Readiness %']] } },
@@ -67,6 +67,80 @@ require([
     self.products = ko.observableArray([]);
     self.kpis = ko.observableArray([]);
     self.addFields = ko.observableArray([]);
+
+    // --- AI settings ---
+    self.aiProvider = ko.observable('claude');
+    self.aiKey = ko.observable('');
+    self.aiModel = ko.observable('');
+    self.aiBaseUrl = ko.observable('');
+    self.aiConfigured = ko.observable(false);
+    self.aiSaveStatus = ko.observable('');
+    self.aiBtnText = ko.pureComputed(function () { return self.aiConfigured() ? '🤖 AI: on' : '🤖 AI: setup'; });
+    self.refreshAiStatus = function () {
+      return fetch('/ai/status').then(r => r.json()).then(function (s) {
+        self.aiConfigured(!!s.configured);
+        if (s.provider) self.aiProvider(s.provider);
+        if (s.model) self.aiModel(s.model);
+      }).catch(function () {});
+    };
+    self.openAiSettings = function () { self.aiSaveStatus(''); self.aiKey(''); document.getElementById('aiDlg').open(); };
+    self.closeAiSettings = function () { document.getElementById('aiDlg').close(); };
+    self.saveAiSettings = function () {
+      self.aiSaveStatus('Saving…');
+      fetch('/ai/config', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: self.aiProvider(), apiKey: self.aiKey(), model: self.aiModel(), baseUrl: self.aiBaseUrl() }) })
+        .then(r => r.json()).then(function (s) {
+          self.aiConfigured(!!s.configured);
+          self.aiSaveStatus(s.configured ? 'Saved — AI is configured.' : 'Saved (no key set yet).');
+          setTimeout(self.closeAiSettings, 800);
+        }).catch(function (e) { self.aiSaveStatus('Error: ' + e); });
+    };
+
+    // --- Design & Spec (AI FDD interpreter) ---
+    self.biTarget = ko.observable(''); self.biText = ko.observable(''); self.biStatus = ko.observable('');
+    self.biResult = ko.observable(false); self.biResultTitle = ko.observable('');
+    self.biFeatures = ko.observableArray([]); self.biPages = ko.observableArray([]); self.biFlows = ko.observableArray([]);
+    self.biValidations = ko.observableArray([]); self.biConditions = ko.observableArray([]); self.biEntities = ko.observableArray([]);
+    self.biVersions = ko.observableArray([]);
+    let lastBlueprint = null, lastSource = '';
+
+    self.loadVersions = function () {
+      return api.list('blueprints').then(function (rows) {
+        rows.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+        self.biVersions(rows.map(function (r) {
+          const feats = (r.blueprint && r.blueprint.features || []).length;
+          return { label: (r.product || '(unassigned)') + ' · ' + (r.version || ''),
+            meta: (r.source || '') + ' · ' + feats + ' features · ' + String(r.createdAt || '').slice(0, 16).replace('T', ' ') };
+        }));
+      }).catch(function () {});
+    };
+
+    self.analyzeDoc = function () {
+      const text = self.biText();
+      if (!text || !text.trim()) { self.biStatus('Paste or upload a document first.'); return; }
+      self.biStatus('Analyzing…'); self.biResult(false);
+      fetch('/ai/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text }) })
+        .then(r => r.json()).then(function (d) {
+          if (d.error) { self.biStatus('Error: ' + d.error); return; }
+          const bp = d.blueprint || {}; lastBlueprint = bp; lastSource = d.source || 'unknown';
+          self.biFeatures(bp.features || []);
+          self.biPages((bp.pages || []).map(p => p && p.name ? (p.name + (p.type ? ' (' + p.type + ')' : '')) : String(p)));
+          self.biFlows((bp.flows || []).map(f => ([f.from, f.to].filter(Boolean).join(' → ') + (f.trigger ? ' · ' + f.trigger : '')) || String(f)));
+          self.biValidations(bp.validations || []); self.biConditions(bp.conditions || []);
+          self.biEntities((bp.entities || []).map(e => e && e.name ? (e.name + (e.fields && e.fields.length ? ': ' + e.fields.join(', ') : '')) : String(e)));
+          self.biResultTitle('Extracted spec · source: ' + lastSource + (bp.productName ? ' · ' + bp.productName : ''));
+          self.biResult(true);
+          self.biStatus(lastSource.indexOf('ai') === 0 ? 'Done (AI).' : 'Done (heuristic — set up AI in the toolbar for deeper analysis).');
+        }).catch(function (e) { self.biStatus('Error: ' + e); });
+    };
+
+    self.saveSpec = function () {
+      if (!lastBlueprint) return;
+      const target = self.biTarget() || lastBlueprint.productName || '(unassigned)';
+      const n = self.biVersions().filter(v => v.label.indexOf(target + ' ') === 0).length + 1;
+      const rec = { product: target, version: 'v' + n, source: lastSource, createdAt: new Date().toISOString(), blueprint: lastBlueprint };
+      api.create('blueprints', rec).then(function () { self.loadVersions(); self.biStatus('Saved spec version ' + rec.version + ' for ' + target + '.'); });
+    };
 
     let currentColl = null, currentScreen = null;
 
@@ -118,6 +192,7 @@ require([
       currentScreen = s; currentColl = s.coll;
       self.currentType(s.type);
       self.title(s.label); self.sub('');
+      if (s.type === 'builder') { self.loadVersions(); return; }
       if (s.type === 'cards') { self.loadPortfolio(); return; }
       if (s.type === 'table') {
         self.canAdd(!!s.add);
@@ -152,6 +227,15 @@ require([
     const vm = new VM();
     ko.applyBindings(vm, document.getElementById('globalBody'));
     ko.applyBindings(vm, document.getElementById('addDlg'));
+    ko.applyBindings(vm, document.getElementById('aiDlg'));
+    vm.refreshAiStatus();
+    const fi = document.getElementById('biFile');
+    if (fi) fi.addEventListener('change', function (e) {
+      const f = e.target.files && e.target.files[0]; if (!f) return;
+      const rd = new FileReader();
+      rd.onload = function () { vm.biText(String(rd.result || '')); vm.biStatus('Loaded ' + f.name + ' (' + String(rd.result || '').length + ' chars)'); };
+      rd.readAsText(f);
+    });
     vm.loadScreen('portfolio');
     document.getElementById('globalBody').style.visibility = 'visible';
   });
